@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f4a35">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Scoring Zone">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px}
+img{max-width:100%}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+</style>
+<title>Scoring Zone Golf</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: single mobile column, one shot = one scroll of numbered stages, sticky action bar at the foot */
+:root{
+  --bg:#eef2ec; --surface:#ffffff; --surface-2:#e3eadf; --line:#cbd6c6;
+  --fg:#16241c; --muted:#5b6b60;
+  --pine:#1f4a35; --pine-ink:#ffffff; --fairway:#6f9a4f; --rough:#a9c48a; --rough-2:#8fb06f;
+  --sand:#e3d3a3; --water:#3c7fa3; --wall:#c4402b; --wall-soft:rgba(196,64,43,.30);
+  --go:#bfe3b0; --go-line:#7fb86b; --gold:#b98a2c;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1712; --surface:#18231c; --surface-2:#203027; --line:#2f4237;
+  --fg:#e5ede6; --muted:#9db0a2; --pine:#7fc29a; --pine-ink:#0f1712;
+  --fairway:#4f7a3a; --rough:#2f4a2a; --rough-2:#28401f; --sand:#b9a676; --water:#3b7596;
+  --wall:#ef6a52; --wall-soft:rgba(239,106,82,.32); --go:#2e5a35; --go-line:#5f9a62; --gold:#d8aa4c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1712; --surface:#18231c; --surface-2:#203027; --line:#2f4237;
+  --fg:#e5ede6; --muted:#9db0a2; --pine:#7fc29a; --pine-ink:#0f1712;
+  --fairway:#4f7a3a; --rough:#2f4a2a; --rough-2:#28401f; --sand:#b9a676; --water:#3b7596;
+  --wall:#ef6a52; --wall-soft:rgba(239,106,82,.32); --go:#2e5a35; --go-line:#5f9a62; --gold:#d8aa4c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.45}
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 140px}
+h1,h2,h3,.disp{font-family:var(--display);text-transform:uppercase;letter-spacing:.03em;margin:0;text-wrap:balance}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:6px 10px}
+.brand{font-family:var(--display);font-weight:700;font-size:1.35rem;letter-spacing:.05em;text-transform:uppercase;color:var(--pine)}
+.brand small{display:block;font-size:.72rem;color:var(--muted);letter-spacing:.14em;font-weight:600}
+.tabs{display:flex;gap:4px;background:var(--surface-2);border-radius:10px;padding:4px;margin-bottom:14px}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);font-family:var(--display);font-weight:600;font-size:1rem;letter-spacing:.06em;text-transform:uppercase;padding:8px 4px;border-radius:7px;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:12px}
+.stack{display:grid;gap:14px}
+.lbl{font-size:.74rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:7px 12px;font:600 .9rem var(--body);cursor:pointer;min-height:36px}
+.chip[aria-pressed="true"]{background:var(--pine);border-color:var(--pine);color:var(--pine-ink)}
+.chip.wallon[aria-pressed="true"]{background:var(--wall);border-color:var(--wall);color:#fff}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.field{display:grid;gap:6px}
+input[type=text],input[type=number],select{width:100%;font:600 1rem var(--body);padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--fg)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stage{display:grid;gap:12px}
+.stage-h{display:flex;align-items:center;gap:10px}
+.stage-h .n{width:26px;height:26px;border-radius:50%;background:var(--pine);color:var(--pine-ink);display:grid;place-items:center;font:700 .9rem var(--display)}
+.stage-h h3{font-size:1.15rem}
+.holebar{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;background:var(--pine);color:var(--pine-ink);border-radius:12px;padding:12px}
+.holebar .mid{text-align:center}
+.holebar .hn{font:700 2.1rem/1 var(--display)}
+.holebar .meta{font:600 .9rem var(--display);letter-spacing:.08em;text-transform:uppercase;opacity:.9}
+.navbtn{border:1px solid currentColor;background:transparent;color:inherit;border-radius:9px;width:40px;height:40px;font:700 1.2rem var(--display);cursor:pointer}
+.navbtn:disabled{opacity:.3}
+.counters{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ctr{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center}
+.ctr b{display:block;font:700 1.7rem/1.1 var(--display);font-variant-numeric:tabular-nums}
+.ctr span{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.pen{display:flex;align-items:center;justify-content:center;gap:8px}
+.pen button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2);color:var(--fg);font-weight:700;cursor:pointer}
+.tip{font-size:.92rem;color:var(--muted);border-left:3px solid var(--gold);padding-left:10px}
+.tip a{color:var(--pine);font-weight:600}
+.mapbox{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--rough)}
+.mapbox svg,.mapbox img{display:block;width:100%;height:auto;max-width:100%}
+.mapbox.tap{cursor:crosshair}
+.ov{position:absolute;top:0;bottom:0;width:38%;background:var(--wall-soft);border:2px solid var(--wall);pointer-events:none}
+.ov.L{left:0;border-width:0 2px 0 0}.ov.R{right:0;border-width:0 0 0 2px}
+.ballpin{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:#fff;border:3px solid #111;pointer-events:none}
+.quadwrap{display:grid;justify-items:center;gap:6px}
+.quadwrap svg{width:min(270px,100%);height:auto;cursor:pointer}
+.result{font:700 1.05rem var(--display);letter-spacing:.06em;text-transform:uppercase}
+.routine{display:grid;gap:8px}
+.rt{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:12px;font:600 1rem var(--body);cursor:pointer}
+.rt .box{flex:none;width:24px;height:24px;border-radius:6px;border:2px solid var(--pine);display:grid;place-items:center;font-weight:700;color:var(--pine-ink)}
+.rt[aria-pressed="true"] .box{background:var(--pine)}
+.rt.commit{background:var(--pine);color:var(--pine-ink);border-color:var(--pine);justify-content:center;font:700 1.25rem var(--display);letter-spacing:.08em;text-transform:uppercase}
+.rt.commit[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#1a1405}
+.rate{display:grid;gap:4px}
+.rate .q{display:flex;justify-content:space-between;gap:8px;font-weight:600}
+.rate .q small{color:var(--muted);font-weight:600}
+.dots{display:flex;gap:6px}
+.dots button{flex:1;min-height:40px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:9px;font:700 1.1rem var(--display);cursor:pointer}
+.dots button[aria-pressed="true"]{background:var(--pine);color:var(--pine-ink);border-color:var(--pine)}
+.score10{display:flex;align-items:baseline;justify-content:space-between;border-top:1px dashed var(--line);padding-top:10px}
+.score10 b{font:700 2.2rem/1 var(--display);font-variant-numeric:tabular-nums;color:var(--pine)}
+.shots{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.shots li{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:start;font-size:.9rem;padding:8px 10px;background:var(--surface-2);border-radius:8px}
+.shots li .k{font:700 1.1rem var(--display);color:var(--pine)}
+.shots li .r{font:700 1rem var(--display);font-variant-numeric:tabular-nums}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.bar .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.big{min-height:52px;border-radius:11px;border:0;font:700 1.25rem var(--display);letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.big.next{background:var(--surface-2);color:var(--fg);border:1px solid var(--line)}
+.big.holed{background:var(--pine);color:var(--pine-ink)}
+.big.full{grid-column:1/-1}
+.btn{border:1px solid var(--line);background:var(--surface-2);color:var(--fg);border-radius:9px;padding:9px 12px;font:600 .92rem var(--body);cursor:pointer}
+.btn.danger{color:var(--wall);border-color:var(--wall)}
+.course{display:grid;gap:10px}
+.cbtn{display:grid;gap:2px;text-align:left;border:2px solid var(--line);background:var(--surface);color:var(--fg);border-radius:12px;padding:14px;cursor:pointer}
+.cbtn[aria-pressed="true"]{border-color:var(--pine);box-shadow:inset 0 0 0 1px var(--pine)}
+.cbtn b{font:700 1.5rem var(--display);text-transform:uppercase;letter-spacing:.04em}
+.cbtn span{color:var(--muted);font-size:.9rem}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:.92rem}
+th,td{padding:7px 6px;text-align:center;border-bottom:1px solid var(--line)}
+th{font:700 .78rem var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--surface-2)}
+td:first-child,th:first-child{text-align:left;padding-left:10px}
+tr.tot td{font-weight:700;background:var(--surface-2)}
+tr.cur td{box-shadow:inset 3px 0 0 var(--gold)}
+tr[data-act]{cursor:pointer}
+.sc{display:inline-grid;place-items:center;min-width:28px;height:28px;font-weight:700}
+.sc.bird{border:2px solid var(--pine);border-radius:50%}
+.sc.eagle{border:4px double var(--pine);border-radius:50%}
+.sc.bogey{border:2px solid var(--muted)}
+.sc.dbl{border:4px double var(--muted)}
+.yn{display:inline-grid;place-items:center;min-width:42px;padding:3px 6px;border-radius:6px;font:700 .9rem var(--display);letter-spacing:.06em;border:1px solid transparent;background:transparent;color:var(--fg);cursor:pointer}
+.yn.y{background:var(--go);border-color:var(--go-line)}
+.yn.n{background:var(--wall-soft);border-color:var(--wall)}
+.tick{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;font:700 1.05rem var(--display)}
+.tick.y{background:var(--go);border:1px solid var(--go-line);color:var(--fg)}
+.tick.n{background:var(--wall-soft);border:1px solid var(--wall);color:var(--wall)}
+.thumbs{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.th{position:relative;aspect-ratio:3/4;max-width:100%;border-radius:7px;overflow:hidden;border:1px dashed var(--line);background:var(--surface-2);cursor:pointer;display:grid;place-items:center}
+.th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.th span{position:relative;font:700 1rem var(--display);color:var(--fg);background:var(--surface);border-radius:5px;padding:0 5px}
+.menubtn{border:1px solid var(--pine);background:transparent;color:var(--pine);border-radius:999px;padding:7px 14px;font:700 .95rem var(--display);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;align-self:center}
+.resume{border-color:var(--pine);box-shadow:inset 3px 0 0 var(--gold)}
+.combine-entry{border-color:var(--pine);background:var(--surface)}
+.combine-entry b{color:var(--pine)}
+.ct-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.ct-h h3{font-size:1.2rem}
+.ct-sc{font:600 1rem var(--display);color:var(--muted);font-variant-numeric:tabular-nums}
+.ct-sc b{font:700 1.7rem var(--display);color:var(--pine)}
+.ct-sc small{font-size:.8rem}
+.ct-big{display:grid;justify-items:end;font:600 1.1rem var(--display);color:var(--muted);font-variant-numeric:tabular-nums}
+.ct-big b{font:700 2.8rem/1 var(--display);color:var(--pine)}
+.ct-big small{font:600 .78rem var(--body);letter-spacing:.04em}
+.ctiles{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.ctile{display:grid;gap:2px;justify-items:center;text-align:center;text-decoration:none;color:var(--fg);background:var(--surface-2);border-radius:9px;padding:8px 4px}
+.ctile b{font:700 1.5rem/1 var(--display);font-variant-numeric:tabular-nums}
+.ctile span{font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);line-height:1.15}
+.cgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.cb{position:relative;min-height:52px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;font:700 1.6rem var(--display);cursor:pointer;display:grid;place-items:center}
+.cb small{position:absolute;top:3px;left:6px;font:600 .72rem var(--body);color:var(--muted)}
+.cb.y{background:var(--go);border-color:var(--go-line)}
+.cb.n{background:var(--wall-soft);border-color:var(--wall);color:var(--wall)}
+.cb.sm{min-height:40px;width:44px;font-size:1.3rem}
+.cb.man{outline:2px dotted var(--gold);outline-offset:1px}
+.crows{display:grid;gap:6px}
+.crow{display:grid;grid-template-columns:22px 58px minmax(0,1fr) auto 44px;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--line)}
+.crow.dr{grid-template-columns:22px minmax(0,1fr) auto 44px}
+.crow input{padding:8px 10px;min-width:0}
+.cn{font:700 1rem var(--display);color:var(--muted);text-align:center}
+.ctg{display:grid;line-height:1.1}
+.ctg b{font:700 1.15rem var(--display)}
+.ctg small{font-size:.72rem;color:var(--muted)}
+.cdf{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;min-width:72px;text-align:right}
+.cfws{display:flex;gap:4px}
+.chip.sm{min-height:34px;padding:5px 9px;font-size:.82rem}
+.btn.sm{padding:4px 9px;font-size:.8rem}
+.trow{display:grid;grid-template-columns:80px minmax(0,1fr) 92px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.trow.tot .tn{font-weight:700;color:var(--fg)}
+.tn{font-size:.85rem;font-weight:600;color:var(--muted)}
+.spark{width:100%;height:34px;display:block}
+.tv{display:grid;justify-items:end;line-height:1.1}
+.tv b{font:700 1.4rem var(--display);font-variant-numeric:tabular-nums}
+.tv small{font-size:.7rem;color:var(--muted);white-space:nowrap}
+@media (max-width:400px){.crow{grid-template-columns:20px 50px minmax(0,1fr) 44px}.crow .cdf{grid-column:2/4;text-align:left;min-width:0}.crow:not(.dr) .cb{grid-row:1;grid-column:4}.ctile span{font-size:.6rem}}
+.chip .cnt{font-weight:600;opacity:.7;font-size:.78rem;margin-left:2px}
+.wmgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.wmin{position:relative;display:block}
+.wmin small{position:absolute;top:3px;left:7px;font:600 .7rem var(--body);color:var(--muted);pointer-events:none}
+.wmin input{padding:16px 6px 6px;text-align:center;font:700 1.2rem var(--display);min-width:0}
+.wmt th.grp{border-left:1px solid var(--line)}
+.wmt td.mx,.wmt th:nth-child(3n+1):not(:first-child){border-left:1px solid var(--line)}
+.wmt tbody tr td.mx{border-left:1px solid var(--line)}
+.wmt td.av{font-weight:700;color:var(--pine);font-size:1.05rem}
+.wmt td.mx,.wmt td.mn{color:var(--muted)}
+.wallgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.wallbox{align-items:center;font-family:var(--display);font-size:1.15rem;letter-spacing:.06em;text-transform:uppercase}
+.wallbox .box{border-color:var(--wall)}
+.wallbox[aria-pressed="true"]{border-color:var(--wall);background:var(--wall-soft)}
+.wallbox[aria-pressed="true"] .box{background:var(--wall);color:#fff}
+.compass{width:min(300px,100%);height:auto}
+.rt.miss[aria-pressed="true"]{border-color:var(--wall);background:var(--wall-soft)}
+.rt.miss .box{border-color:var(--wall)}
+.rt.miss[aria-pressed="true"] .box{background:var(--wall);color:#fff}
+.cmt td{padding:5px 4px}
+.cmt input{padding:8px 6px;text-align:center;font:700 1.1rem var(--display);min-width:0;width:100%}
+.cmt td:first-child{min-width:78px}
+.cmt input::-webkit-outer-spin-button,.cmt input::-webkit-inner-spin-button,.wmin input::-webkit-outer-spin-button,.wmin input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.cmt input,.wmin input{-moz-appearance:textfield;appearance:textfield}
+.cmw{font-size:.72rem;color:var(--wall);font-weight:600}
+.cmchart svg{width:100%;height:auto;display:block}
+.gaps{display:flex;flex-wrap:wrap;gap:6px}
+.gap{font-size:.82rem;background:var(--surface-2);border-radius:999px;padding:4px 10px;color:var(--muted)}
+.gap b{color:var(--fg)}
+.gap.tight{background:var(--wall-soft);color:var(--fg)}
+.sugg{display:grid;gap:8px;border:1px dashed var(--pine);border-radius:10px;padding:10px;background:var(--surface-2)}
+.sopts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sopt{display:grid;gap:2px;text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:9px;padding:9px 10px;cursor:pointer;font:inherit}
+.sopt b{font:700 1.2rem var(--display);letter-spacing:.03em;text-transform:uppercase}
+.sopt span{font-size:.85rem;font-weight:600}
+.sopt small{font-size:.75rem;color:var(--muted)}
+.sopt.best{border-color:var(--pine);box-shadow:inset 0 0 0 1px var(--pine)}
+.sopt[aria-pressed="true"]{background:var(--pine);color:var(--pine-ink)}
+.sopt[aria-pressed="true"] small{color:inherit;opacity:.8}
+.swarn{color:var(--wall);font-weight:600}
+.yn.man{outline:2px dotted var(--gold);outline-offset:1px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;display:grid;gap:2px}
+.kpi b{font:700 1.8rem/1 var(--display);font-variant-numeric:tabular-nums}
+.kpi span{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.note{font-size:.86rem;color:var(--muted)}
+.hist li{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.hist{list-style:none;margin:0;padding:0}
+@media (max-width:380px){.row2{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}}
+@media (prefers-reduced-motion:no-preference){.chip,.dots button,.rt{transition:background .12s,color .12s}}
+</style>
+
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div class="bar" id="bar" hidden></div>
+
+<script>
+// ---------- Course data (metres, from sanctuarycovegolf.com.au hole pages) ----------
+// [par, tee metres, dogleg L/R/0, left hazard, right hazard, tip]
+const PINES_TEES=['Black','Blue','Red'];
+const PALMS_TEES=['Black','Blue','White','Red'];
+const COURSES={
+ pines:{name:'The Pines',par:72,tees:PINES_TEES,starts:[1,10],planner:'https://www.provisualizer.com/2dplanner.php?n=Sanctuary%20Cove%20Pines%20Course&c=-30955186,170407793,3668,1119,5293,6180,,,,,5168,3515,7751,2550,4519,6115,,,,,5650,3254,2562,512,6441,6767,4160,3646,,,3797,4514,3699,6308,,,,,,,5385,5294,7879,7793,4331,3765,,,,,5403,6924,2379,2974,5978,5157,,,,,3898,5257,5991,6392,,,,,,,5511,5555,1037,6690,6416,4137,,,,,3818,6225,8655,9297,3696,2299,5843,7064,,,5078,5978,2058,1476,6110,6359,,,,,3122,3926,5101,10931,4985,1961,5087,7117,,,4932,6430,5451,8626,4966,4072,,,,,5392,7091,6187,3308,,,,,,,5922,4901,6965,8413,4941,3275,,,,,5479,7519,5546,462,4877,6579,,,,,5163,2548,4362,3349,,,,,,,4907,4311,1107,7163,7340,5072,3253,5604,,,4287,3585,8698,3135,3900,6273,,,,,&v=2',
+  url:n=>n===1?'https://www.sanctuarycovegolf.com.au/cms/course/hole-1/':n===2?'https://www.sanctuarycovegolf.com.au/cms/course/the-pines-hole-2/':`https://www.sanctuarycovegolf.com.au/cms/course/${n}/`,
+  holes:[
+  [4,[371,359,280],0,'trees','ob','Out of bounds in the trees right. The front greenside bunker reaches further across than it looks.'],
+  [4,[360,343,302],'L','trees','trees','Dogleg left. Play wide of the corner; the green is firm, so club down on approach.'],
+  [5,[472,439,392],'L','bunker','bunker','Dogleg left. Favour the right side, just left of the fairway bunker. Trouble through the back.'],
+  [3,[172,158,118],0,'rough','water','Creek right. Wind at the green is usually stronger than you feel on the tee.'],
+  [4,[387,364,282],0,'bunker','rough','Aim left of centre; mounds right kill distance. Bunkers left of the green, laying up is a fine play.'],
+  [4,[325,311,285],0,'water','bunker','Water left, bunkers right. Accuracy over length.'],
+  [3,[155,130,100],0,'trees','trees','Short par 3 through the pines.'],
+  [4,[419,406,358],0,'trees','trees','Usually into the wind. A draw gives roll; green bunkered right, sheltered near the green.'],
+  [5,[550,526,483],'R','trees','water','Long dogleg right: lake right, pines left. Second shot to the right side.'],
+  [4,[428,391,304],0,'trees','water','Water right all the way, wind left to right. Keep everything left.'],
+  [5,[522,496,444],0,'trees','water','Creek right that crosses in front of the green; bunkers left off the tee.'],
+  [4,[324,310,301],0,'water','trees','No benefit past ~210m. Water left and long; the left fairway bunker costs a shot.'],
+  [3,[201,154,121],0,'water','water','All carry over water to a tiered green. Long is better than wet.'],
+  [4,[390,353,323],'R','water','trees','Dogleg right. Fade off the tee; never aim at the left of the green.'],
+  [4,[400,374,356],0,'bunker','bunker','Green ringed by bunkers. Laying up short for a wedge is smart.'],
+  [3,[163,146,116],0,'bunker','bunker','Carry all the sand; a little long is fine, the green slopes up.'],
+  [5,[517,487,452],0,'trees','water','Water right off the tee. Short drive? Take three short irons in.'],
+  [4,[425,400,347],0,'water','water','Lake left, water right. A draw is ideal; avoid the back bunker.']
+ ]},
+ palms:{name:'The Palms',par:70,tees:PALMS_TEES,starts:[1,11],planner:'https://www.provisualizer.com/2dplanner.php?n=Sanctuary%20Cove%20Palms%20Course&c=-30955109,170407987,7911,754,2971,6862,6417,3958,,,6246,4834,7944,2084,3890,5825,,,,,8065,4842,6900,5389,,,,,,,4072,3535,7944,4028,4422,5731,,,,,6120,4420,4008,6614,,,,,,,4678,5948,8720,3753,3650,5026,,,,,5776,4037,8261,5776,4297,4258,,,,,4829,6238,3589,4475,,,,,,,4856,5619,1359,6733,6162,4169,,,,,2990,5024,2651,9327,5566,2819,4311,6575,,,4952,6058,4576,8468,4634,4121,,,,,5840,6709,3630,4007,,,,,,,5144,4269,1976,6027,5827,4993,,,,,2672,5279,9226,3189,2762,4829,6635,5487,,,6102,4054,1267,5154,6135,4658,,,,,3267,4853,4478,6791,,,,,,,5949,3118,8735,4695,3765,4689,,,,,4709,4415,1423,5484,6076,5126,,,,,&v=2',
+  url:n=>`https://www.sanctuarycovegolf.com.au/cms/palms/${n}/`,
+  holes:[
+  [5,[484,465,453,421],0,'water','water','Water both sides. Bold line is right over the cross bunkers.'],
+  [4,[387,357,337,315],0,'bunker','bunker','Often into the wind. Slight draw between the fairway bunkers; steep drop behind the green.'],
+  [3,[190,169,147,131],0,'bunker','bunker','Long par 3, deep bunkers left and right. Short leaves a simple chip.'],
+  [4,[326,302,253,243],'L','ob','water','Dogleg left. Out of bounds left, water right. Drive to the right side.'],
+  [3,[173,158,142,123],0,'rough','water','Downhill over the lake. Carry the front bunkers; bail out left.'],
+  [4,[387,373,306,269],0,'bunker','bunker','Blind green over a ridge. Water left of the green.'],
+  [4,[360,340,320,283],0,'ob','water','Water right, out of bounds left. Left is the safe line.'],
+  [3,[146,120,117,113],0,'rough','water','Water front and right. Miss left, never short.'],
+  [4,[392,375,355,330],0,'bunker','bunker','Drive right side. Steep drop-off left of the green.'],
+  [5,[472,450,413,382],0,'bunker','bunker','Short par 5. Lay up right for a short iron over water to a tiered green.'],
+  [4,[327,318,283,283],'L','ob','water','Dogleg left to a blind, elevated green. OB left, water right.'],
+  [3,[163,139,130,107],0,'rough','water','Downhill; water right. Left of the front bunker can feed on.'],
+  [4,[314,294,285,246],0,'bunker','water','Lay up short of the cross bunkers. Water right and over the back.'],
+  [5,[498,473,439,380],0,'rough','water','Bold drive carries ~230m of water; safe play is left around it.'],
+  [4,[374,352,333,299],0,'bunker','bunker','Right side off the tee. Drop-off right and behind the green.'],
+  [3,[162,148,139,123],0,'bunker','water','Carry over water. Anything right is wet; lay up short left.'],
+  [4,[367,350,328,311],'R','bunker','water','Dogleg right. Drive left of the pot bunker; water right of the green.'],
+  [4,[368,347,323,286],0,'bunker','water','Drive left, short of the cross bunker. Water right and long.']
+ ]}
+};
+const OPT={
+ type:['Tee','2nd Shot','Approach Shot','Recovery','Chip','Greenside Bunker','Putt'],
+ wind:['No Wind','Headwind','Tailwind','Cross wind - Right','Cross wind - Left'],
+ elev:['None','Uphill','Downhill'],
+ surf:['Tee','Fairway','Rough','Deep Rough','Bunker','Pines'],
+ slope:['Flat','Below Feet','Above Feet','Uphill','Downhill'],
+ shape:['Draw','Fade','Straight','Pitch','Flighted Pitch','Chip','Bunker','Splash','Flop'],
+ club:['Driver','5 Wood','7 Wood','4 Hybrid','6 Iron','7 Iron','8 Iron','9 Iron','PW','AW','52','56','Putter']
+};
+const TEE_SHAPES=['Draw','Fade','Straight'];
+const TEE_CLUBS=OPT.club.filter(c=>!['52','56','Putter'].includes(c));
+const CHIP_SHAPES=OPT.shape.filter(x=>!['Draw','Fade','Straight','Bunker','Splash'].includes(x)).concat(['Bump & Run']);
+const CHIP_CLUBS=OPT.club.filter(c=>!['Driver','5 Wood','7 Wood','6 Iron','7 Iron'].includes(c)).flatMap(c=>c==='56'?['56','60']:[c]);
+const CHIP_OUT=[['green','On Green'],['10ft','Within 10 ft'],['4ft','Within 4 ft'],['chunk','Missed Green - Chunk'],['thin','Missed Green - Thin']];
+const APP_SHAPES=OPT.shape.filter(x=>!['Chip','Bunker','Splash','Flop'].includes(x));
+const APP_CLUBS=OPT.club.filter(c=>!['Driver','Putter'].includes(c));
+const SEC_SHAPES=OPT.shape.filter(x=>!['Chip','Splash','Flop'].includes(x));
+const SEC_CLUBS=OPT.club.filter(c=>!['Driver','Putter','52','56'].includes(c));
+const BUN_SHAPES=['Pitch','Chip','Bunker','Splash'];
+const BUN_CLUBS=['52','56','60'];
+const APP_OUT=[['green','On Green'],['10ft','Within 10 ft'],['4ft','Within 4 ft'],['miss','Missed Green']];
+const REC_OUT=[['play','Back in Play'],['again','Another Recovery Required']];
+const REC_CLUBS=OPT.club.filter(c=>!['Driver','Putter'].includes(c));
+const PUTT_OUT=[['holed','Holed'],['p4','Within 4 ft'],['p10','Within 10 ft'],['misread','Misread'],['short','Short'],['long','Long']];
+const PUTT_BAD=['misread','short','long'];
+const OUT_ALL=CHIP_OUT.concat([['miss','Missed Green']],REC_OUT,PUTT_OUT);
+const isMissOut=k=>k==='chunk'||k==='thin'||k==='miss'||k==='again';
+const outText=s=>(s.out||[]).map(k=>(OUT_ALL.find(o=>o[0]===k)||[k,k])[1]).join(', ');
+function outStage(d,list,num){return `<div class="stage"><div class="stage-h"><span class="n">${num}</span><h3>Outcome</h3></div>
+   <div class="routine">${list.map(([k,l])=>{const on=(d.out||[]).includes(k);return `<button class="rt ${isMissOut(k)||PUTT_BAD.includes(k)?'miss':''}" data-act="outt" data-v="${k}" aria-pressed="${on}"><span class="box">${on?'✓':''}</span><span>${l}</span></button>`}).join('')}</div></div>`}
+const QN={LL:'Long Left',LR:'Long Right',SL:'Short Left',SR:'Short Right'};
+const SIDE={L:'Left',M:'Middle',R:'Right'};
+
+// ---------- Storage (this device only) ----------
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},
+ set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}},
+ del(k){try{localStorage.removeItem(k)}catch(e){}}};
+
+(function(){try{const r=JSON.parse(localStorage.getItem('scg-round')||'null');if(!r)return;let ch=false;Object.values(r.holes||{}).forEach(h=>(h.shots||[]).forEach(x=>{if(x.type==='Bunker'){x.type='Greenside Bunker';ch=true}}));if(r.draft&&r.draft.type==='Bunker'){r.draft.type='Greenside Bunker';ch=true}if(ch)localStorage.setItem('scg-round',JSON.stringify(r))}catch(e){}})();
+let S={tab:'play',setup:{course:'pines',start:1,tee:'Blue'},round:store.get('scg-round',null),confirm:null,msg:''};
+const save=()=>{if(S.round)store.set('scg-round',S.round)};
+
+// ---------- Helpers ----------
+const C=()=>COURSES[S.round.course];
+const holeInfo=(course,n)=>{const c=COURSES[course];const h=c.holes[n-1];const ti=c.tees.indexOf(S.round?S.round.tee:S.setup.tee);
+ return{n,par:h[0],m:h[1][ti<0?1:ti],dog:h[2],L:h[3],R:h[4],tip:h[5],url:c.url(n)}};
+const order=(start)=>{const a=[];for(let i=0;i<18;i++)a.push(((start-1+i)%18)+1);return a};
+const curNo=()=>S.round.order[S.round.idx];
+const H=(n)=>S.round.holes[n];
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const rating=s=>(s.vis!=null&&s.feel!=null&&s.commit!=null)?s.vis+s.feel+s.commit:null;
+
+function newShot(n){
+ const h=H(n),info=holeInfo(S.round.course,n),k=h.shots.length+1,prev=h.shots[h.shots.length-1];
+ const first=k===1;
+ return{type:first?'Tee':null,wind:prev?prev.wind:null,elev:'None',surf:first?'Tee':null,slope:'Flat',
+  dist:first?info.m:'',shape:null,target:'',club:first?(info.par>3?'Driver':null):null,
+  wall:[],nogo:null,res:null,pt:null,see:false,feelit:false,commitGo:false,vis:null,feel:null,commit:null};
+}
+function startRound(){
+ const st=S.setup,ord=order(st.start),holes={};ord.forEach(n=>holes[n]={shots:[],pen:0,done:false,ov:{i100:null,ud:null}});
+ S.round={id:Date.now(),date:new Date().toISOString(),course:st.course,start:st.start,tee:st.tee,order:ord,idx:0,holes,draft:null,finished:false};
+ S.round.draft=newShot(ord[0]);S.tab='play';save();
+}
+
+// Scoring Method maths
+function holeStats(n){
+ const h=H(n),info=holeInfo(S.round.course,n),shots=h.shots;
+ const strokes=shots.length+h.pen;
+ const rated=shots.map(rating).filter(v=>v!=null);
+ const ps=rated.length?rated.reduce((a,b)=>a+b,0)/rated.length:null;
+ let first=-1;shots.forEach((s,i)=>{if(first<0&&s.dist!==''&&s.dist!=null&&+s.dist<=100)first=i+1});
+ let i100=null,ud=null;
+ if(first>0){i100=first<=info.par-1;if(h.done)ud=(shots.length-first+1)<=3}
+ else if(h.done&&shots.length)i100=false;
+ if(h.ov.i100!=null)i100=h.ov.i100; if(h.ov.ud!=null)ud=h.ov.ud;
+ const chipsN=shots.filter(x=>x.type==='Chip').length,puttsN=shots.filter(x=>x.type==='Putt').length;
+ const nopen=h.done?h.pen===0:null,chip2=h.done?chipsN<2:null,putt2=h.done?puttsN<=2:null;
+ return{strokes,ps,rated:rated.length,i100,ud,nopen,chip2,putt2,chipsN,puttsN,par:info.par,m:info.m,done:h.done,played:shots.length>0||h.pen>0};
+}
+
+// ---------- Hole schematic (drawn; no outside imagery allowed in the artifact) ----------
+const VW=300,VH=440,TY=410,GY=70;
+function cx(t,dog){const gx=dog==='L'?100:dog==='R'?200:150;return 150+(gx-150)*Math.pow(t,2.6)}
+const yAt=t=>TY-(TY-GY)*t, tAt=y=>Math.min(1,Math.max(0,(TY-y)/(TY-GY)));
+function holeSVG(info,d,mode){
+ const par3=info.par===3,w=par3?22:34,t0=par3?.62:.16,t1=.9,pts=[],pts2=[];
+ for(let i=0;i<=20;i++){const t=t0+(t1-t0)*i/20;pts.push([cx(t,info.dog)-w,yAt(t)]);pts2.unshift([cx(t,info.dog)+w,yAt(t)])}
+ const fair=pts.concat(pts2).map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' ');
+ const g=[cx(1,info.dog),yAt(1)];
+ const side=(s,haz)=>{const sg=s==='L'?-1:1;let o='';
+  if(haz==='water'){const a=[],b=[];for(let i=0;i<=16;i++){const t=.25+.72*i/16;const x=cx(t,info.dog)+sg*(w+14);a.push([x,yAt(t)]);b.unshift([x+sg*46,yAt(t)])}
+   o+=`<polygon points="${a.concat(b).map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' ')}" style="fill:var(--water)" opacity=".9"/>`}
+  if(haz==='trees'){for(let i=0;i<14;i++){const t=.08+.9*i/13;const x=cx(t,info.dog)+sg*(w+22+(i%3)*14);o+=`<circle cx="${x.toFixed(1)}" cy="${yAt(t).toFixed(1)}" r="${9+(i%2)*3}" fill="#2c5a36"/>`}}
+  if(haz==='ob'){const a=[];for(let i=0;i<=16;i++){const t=.1+.88*i/16;a.push([cx(t,info.dog)+sg*(w+30),yAt(t)])}
+   o+=`<polyline points="${a.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round"/>`;
+   const m=a[8];o+=`<text x="${(m[0]+sg*14).toFixed(1)}" y="${m[1]}" fill="#fff" font-family="Barlow Condensed,sans-serif" font-weight="700" font-size="14" text-anchor="middle">OB</text>`}
+  if(haz==='bunker'){[.5,.68].forEach(t=>{if(par3&&t<.6)return;o+=`<ellipse style="fill:var(--sand)" cx="${(cx(t,info.dog)+sg*(w-4)).toFixed(1)}" cy="${yAt(t).toFixed(1)}" rx="12" ry="18"/>`})}
+  return o};
+ let wall='';
+ ['L','R'].filter(k=>wallHas(d,k)).forEach(side=>{const a=[];for(let i=0;i<=20;i++){const t=i/20;a.push([cx(t,info.dog)+(side==='L'?-1:1)*(w*0.55),yAt(t)])}
+  const edge=side==='L'?0:VW;const poly=[[edge,yAt(0)+30]].concat(a).concat([[edge,yAt(1)-40]]);
+  wall+=`<polygon points="${poly.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' ')}" style="fill:var(--wall-soft);stroke:var(--wall)" stroke-width="2"/>
+  <text style="fill:var(--wall)" x="${side==='L'?14:VW-14}" y="${GY+8}" text-anchor="${side==='L'?'start':'end'}" font-family="Barlow Condensed,sans-serif" font-weight="700" font-size="16" letter-spacing="1">WALL</text>`});
+ const ball=d.pt&&mode==='result'?`<circle cx="${d.pt.x}" cy="${d.pt.y}" r="8" fill="#fff" stroke="#111" stroke-width="3"/>`:'';
+ return `<svg viewBox="0 0 ${VW} ${VH}" role="img" aria-label="Hole ${info.n} schematic">
+ <rect style="fill:var(--rough)" width="${VW}" height="${VH}"/>
+ <rect x="0" y="0" width="${VW}" height="${VH}" fill="url(#mow${mode})" opacity=".35"/>
+ <defs><pattern id="mow${mode}" width="20" height="40" patternUnits="userSpaceOnUse"><rect style="fill:var(--rough-2)" width="20" height="20"/></pattern></defs>
+ ${side('L',info.L)}${side('R',info.R)}
+ <polygon style="fill:var(--fairway)" points="${fair}"/>
+ <ellipse cx="${g[0].toFixed(1)}" cy="${g[1]}" rx="30" ry="24" fill="#7fc06a" stroke="#4d8a3d" stroke-width="2"/>
+ <line x1="${g[0].toFixed(1)}" y1="${g[1]}" x2="${g[0].toFixed(1)}" y2="${g[1]-30}" stroke="#222" stroke-width="2"/><polygon style="fill:var(--wall)" points="${g[0].toFixed(1)},${g[1]-30} ${(g[0]+14).toFixed(1)},${g[1]-25} ${g[0].toFixed(1)},${g[1]-20}"/>
+ <rect x="138" y="${TY-6}" width="24" height="14" rx="3" fill="#7fc06a" stroke="#4d8a3d"/>
+ ${wall}${ball}
+ <text x="${VW-10}" y="${VH-12}" text-anchor="end" fill="#fff" font-family="Barlow Condensed,sans-serif" font-weight="700" font-size="15">${info.m}m · PAR ${info.par}</text>
+ </svg>`;
+}
+const WALLS=[['L','Left'],['R','Right'],['Long','Long'],['Short','Short']];
+function wallList(d){return Array.isArray(d.wall)?d.wall:d.wall?[d.wall]:[]}
+function wallHas(d,k){return wallList(d).includes(k)}
+function wallText(d){return wallList(d).map(k=>(WALLS.find(w=>w[0]===k)||[k,k])[1]).join(' + ')}
+function compassSVG(d){
+ const c=140,R=128,r=104,ri=30,P=(a,rad)=>[(c+rad*Math.cos(a*Math.PI/180)).toFixed(1),(c+rad*Math.sin(a*Math.PI/180)).toFixed(1)];
+ const secs=[['Long',225,315,'LONG',270],['R',315,405,'RIGHT',0],['Short',45,135,'SHORT',90],['L',135,225,'LEFT',180]];
+ const any=wallList(d).length>0;let o='';
+ o+=`<circle cx="${c}" cy="${c}" r="${R}" style="fill:var(--surface-2);stroke:var(--line)" stroke-width="2"/>`;
+ for(let a=0;a<360;a+=10){const big=a%90===0,mid=a%30===0;const [x1,y1]=P(a,R-1),[x2,y2]=P(a,R-(big?14:mid?9:5));o+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" style="stroke:var(--muted)" stroke-width="${big?2.5:1}" opacity="${big?.9:.6}"/>`}
+ for(const [k,a0,a1,lab,am] of secs){
+  const on=wallHas(d,k),[ax,ay]=P(a0,r),[bx,by]=P(a1,r),[cx2,cy2]=P(a1,ri),[dx,dy]=P(a0,ri);
+  const fill=on?'var(--wall-soft)':any?'var(--go)':'var(--surface)',stroke=on?'var(--wall)':any?'var(--go-line)':'var(--line)';
+  o+=`<path d="M${dx},${dy} L${ax},${ay} A${r},${r} 0 0 1 ${bx},${by} L${cx2},${cy2} A${ri},${ri} 0 0 0 ${dx},${dy} Z" style="fill:${fill};stroke:${stroke};cursor:pointer" stroke-width="2" data-act="wallt" data-v="${k}" role="button" aria-label="${lab} wall${on?' (set)':''}"/>`;
+  const [lx,ly]=P(am,r*.62);o+=`<text x="${lx}" y="${(+ly+5).toFixed(1)}" text-anchor="middle" style="fill:${on?'var(--wall)':'var(--fg)'}" font-family="Barlow Condensed,sans-serif" font-weight="700" font-size="17" letter-spacing="1" pointer-events="none">${lab}</text>`;
+  if(on){const [wx,wy]=P(am,r*.62);o+=`<text x="${wx}" y="${(+wy+21).toFixed(1)}" text-anchor="middle" style="fill:var(--wall)" font-family="Barlow Condensed,sans-serif" font-weight="700" font-size="11" letter-spacing="1.5" pointer-events="none">WALL</text>`}
+ }
+ // needle pointing to the target (Long)
+ o+=`<polygon points="${c},${c-ri-14} ${c-7},${c-ri+3} ${c+7},${c-ri+3}" style="fill:var(--gold)" opacity=".9" pointer-events="none"/>`;
+ o+=`<circle cx="${c}" cy="${c}" r="${ri-4}" style="fill:var(--surface);stroke:var(--line)" stroke-width="2" pointer-events="none"/>`;
+ o+=`<circle cx="${c}" cy="${c}" r="7" style="fill:#fff;stroke:var(--fg)" stroke-width="2" pointer-events="none"/>`;
+ return `<svg viewBox="0 0 280 280" role="group" aria-label="Uncrossable wall compass" class="compass">${o}</svg>`;
+}
+function photoKey(n,course){return `scg-photo-${course||(S.round?S.round.course:S.setup.course)}-${n}`}
+// Hole photos live in IndexedDB (room for both courses); older localStorage copies are migrated on load
+const PH={};let idb=null;
+function idbOpen(){return new Promise(res=>{try{const r=indexedDB.open('scg',1);r.onupgradeneeded=()=>r.result.createObjectStore('photos');r.onsuccess=()=>res(r.result);r.onerror=()=>res(null)}catch(e){res(null)}})}
+async function loadPhotos(){idb=await idbOpen();
+ if(idb)await new Promise(res=>{try{const rq=idb.transaction('photos').objectStore('photos').openCursor();rq.onsuccess=()=>{const c=rq.result;if(c){PH[c.key]=c.value;c.continue()}else res()};rq.onerror=()=>res()}catch(e){res()}});
+ try{const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('scg-photo-'))ks.push(k)}for(const k of ks){if(!PH[k])await putPhoto(k,JSON.parse(localStorage.getItem(k)));}}catch(e){}}
+function putPhoto(k,url){PH[k]=url;return new Promise(res=>{const fb=()=>res(store.set(k,url));if(!idb)return fb();try{const tx=idb.transaction('photos','readwrite');tx.objectStore('photos').put(url,k);tx.oncomplete=()=>{store.del(k);res(true)};tx.onerror=fb;tx.onabort=fb}catch(e){fb()}})}
+function delPhoto(k){delete PH[k];store.del(k);try{idb&&idb.transaction('photos','readwrite').objectStore('photos').delete(k)}catch(e){}}
+function fileToJpeg(file){return new Promise((res,rej)=>{const rd=new FileReader();rd.onerror=rej;rd.onload=()=>{const img=new Image();img.onerror=rej;img.onload=()=>{const sc=Math.min(1,900/img.width),cv=document.createElement('canvas');cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);res(cv.toDataURL('image/jpeg',.75))};img.src=rd.result};rd.readAsDataURL(file)})}
+function mapBlock(info,d,mode){
+ const photo=PH[photoKey(info.n)];
+ if(photo){
+  const ov=['L','R'].filter(k=>wallHas(d,k)).map(k=>`<div class="ov ${k}"></div>`).join('');
+  const ball=d.pt&&mode==='result'?`<div class="ballpin" style="left:${d.pt.px}%;top:${d.pt.py}%"></div>`:'';
+  return `<div class="mapbox ${mode==='result'?'tap':''}" ${mode==='result'?'data-act="mapimg"':''}><img src="${photo}" alt="Aerial photo of hole ${info.n}">${ov}${ball}</div>`;
+ }
+ return `<div class="mapbox ${mode==='result'?'tap':''}" ${mode==='result'?'data-act="mapsvg"':''}>${holeSVG(info,d,mode)}</div>`;
+}
+function quadSVG(d,mode){
+ const c=130,r=112,paths={LL:`M${c},${c} L${c},${c-r} A${r},${r} 0 0 0 ${c-r},${c} Z`,LR:`M${c},${c} L${c+r},${c} A${r},${r} 0 0 0 ${c},${c-r} Z`,
+  SL:`M${c},${c} L${c-r},${c} A${r},${r} 0 0 0 ${c},${c+r} Z`,SR:`M${c},${c} L${c},${c+r} A${r},${r} 0 0 0 ${c+r},${c} Z`};
+ const lab={LL:[c-r*.48,c-r*.42],LR:[c+r*.48,c-r*.42],SL:[c-r*.48,c+r*.5],SR:[c+r*.48,c+r*.5]};
+ let o='';
+ for(const q of ['LL','LR','SL','SR']){
+  const red=d.nogo===q,fill=d.nogo?(red?'var(--wall-soft)':'var(--go)'):'var(--surface-2)';
+  const stroke=red?'var(--wall)':(d.nogo?'var(--go-line)':'var(--line)');
+  const hit=mode==='result'&&d.res===q;
+  o+=`<path d="${paths[q]}" style="fill:${fill};stroke:${stroke}" stroke-width="2" data-act="quad" data-q="${q}" data-mode="${mode}"/>`;
+  o+=`<text style="fill:var(--fg)" x="${lab[q][0]}" y="${lab[q][1]}" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-weight="700" font-size="14" pointer-events="none">${QN[q].toUpperCase()}</text>`;
+  if(red)o+=`<text style="fill:var(--wall)" x="${lab[q][0]}" y="${lab[q][1]+18}" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-weight="700" font-size="12" pointer-events="none">NO GO</text>`;
+  if(hit)o+=`<circle cx="${lab[q][0]}" cy="${lab[q][1]+30}" r="9" fill="#fff" stroke="#111" stroke-width="3" pointer-events="none"/>`;
+ }
+ o+=`<line style="stroke:var(--fg)" x1="${c}" y1="${c-r}" x2="${c}" y2="${c+r}" stroke-opacity=".35"/><line style="stroke:var(--fg)" x1="${c-r}" y1="${c}" x2="${c+r}" y2="${c}" stroke-opacity=".35"/>`;
+ o+=`<circle style="fill:var(--wall)" cx="${c}" cy="${c}" r="5" pointer-events="none"/><line style="stroke:var(--fg)" x1="${c}" y1="${c}" x2="${c}" y2="${c-24}" stroke-width="2" pointer-events="none"/>`;
+ o+=`<text style="fill:var(--muted)" x="${c}" y="14" text-anchor="middle" font-size="11" font-family="Barlow Condensed,sans-serif" font-weight="700">LONG</text><text style="fill:var(--muted)" x="${c}" y="256" text-anchor="middle" font-size="11" font-family="Barlow Condensed,sans-serif" font-weight="700">SHORT</text>`;
+ return `<svg viewBox="0 0 260 260" role="img" aria-label="Target circle">${o}</svg>`;
+}
+
+// ---------- UI pieces ----------
+const chips=(f,list,val,extra='')=>`<div class="chips">${list.map(v=>`<button class="chip ${extra}" data-act="set" data-f="${f}" data-v="${esc(v)}" aria-pressed="${val===v}">${esc(v)}</button>`).join('')}</div>`;
+const dots=(f,max,val)=>`<div class="dots">${Array.from({length:max+1},(_,i)=>`<button data-act="rate" data-f="${f}" data-v="${i}" aria-pressed="${val===i}">${i}</button>`).join('')}</div>`;
+const shotLine=(s,i)=>{const bits=[s.club,s.dist!==''?s.dist+'m':null,s.shape,s.surf&&`${s.surf}${s.slope&&s.slope!=='Flat'?'/'+s.slope:''}`,s.wind,wallList(s).length?'Wall '+wallText(s):null].filter(Boolean).join(' · ');
+ const out=[s.res&&(SIDE[s.res]||QN[s.res]),outText(s)].filter(Boolean).join(' · ');const r=rating(s);
+ return `<li><span class="k">${i+1}</span><span><b>${esc(s.type||'Shot')}</b> ${esc(bits)}${out?` → <b>${esc(out)}</b>`:''}</span><span class="r">${r!=null?r+'/10':''}</span></li>`};
+
+function renderSetup(){
+ const st=S.setup,c=COURSES[st.course];
+ if(!c.starts.includes(st.start))st.start=c.starts[0];
+ if(!c.tees.includes(st.tee))st.tee='Blue';
+ const tot=c.holes.reduce((a,h)=>a+h[1][c.tees.indexOf(st.tee)],0);
+ const hist=store.get('scg-history',[]);
+ const ch=store.get('scg-combine-hist',[]),cl=ch[ch.length-1];
+ return `<div class="stack">
+ <button class="cbtn combine-entry" data-act="combine"><span class="lbl">Practice</span><b>Golf Combine &amp; Club Matrix</b><span>${cl?`Last session ${cl.total}/50 on ${new Date(cl.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})} · ${ch.length} saved`:'Putting, chipping, wedges and driving. 50 shots, scored out of 10 each.'}</span></button>
+ <div class="panel"><div class="lbl">Course</div><div class="course">
+  ${['pines','palms'].map(k=>`<button class="cbtn" data-act="course" data-v="${k}" aria-pressed="${st.course===k}"><b>${COURSES[k].name}</b><span>${k==='pines'?'Arnold Palmer signature · Par 72 · Lakes and pine corridors':'Par 70 · Cabbage palms, pot bunkers and water'}</span></button>`).join('')}
+ </div></div>
+ <div class="panel"><div class="lbl">Starting tee</div>
+  <div class="chips">${c.starts.map(n=>`<button class="chip" data-act="start" data-v="${n}" aria-pressed="${st.start===n}">${n===1?'1st Tee':n===10?'10th Tee':'11th Tee'}</button>`).join('')}</div>
+  <div class="lbl">Tee markers</div>
+  <div class="chips">${c.tees.map(t=>`<button class="chip" data-act="tee" data-v="${t}" aria-pressed="${st.tee===t}">${t}</button>`).join('')}</div>
+  <div class="note">${c.name} from the ${st.tee} tees: ${tot.toLocaleString()} m, par ${c.par}. Holes play ${order(st.start).slice(0,3).join(', ')} … ${order(st.start)[17]}.</div>
+ </div>
+ <div class="panel"><div class="lbl">Hole photos · ${c.name}</div>
+  <div class="note">Screenshot each hole from the satellite hole planner, then import the screenshots here. They are matched to holes 1–18 in filename order (hole01, hole02 …), and you can tap any hole to replace its photo. Photos are kept on this device.</div>
+  <div class="chips">${c.planner?`<a class="btn" href="${esc(c.planner)}" target="_blank" rel="noopener">Open ${c.name.replace('The ','')} hole planner ↗</a>`:''}<label class="btn" for="photobulk">Import screenshots</label><input id="photobulk" type="file" accept="image/*" multiple hidden></div>
+  <div class="thumbs">${Array.from({length:18},(_,i)=>{const n=i+1,ph=PH[photoKey(n,st.course)];return `<label class="th" for="ph-${n}">${ph?`<img src="${ph}" alt="">`:''}<span>${n}</span></label><input id="ph-${n}" class="photoone" data-n="${n}" type="file" accept="image/*" hidden>`}).join('')}</div>
+  <div class="note">${Array.from({length:18},(_,i)=>PH[photoKey(i+1,st.course)]?1:0).reduce((a,b)=>a+b,0)} of 18 holes have a photo.</div>
+  ${S.msg?`<p class="note" role="status">${esc(S.msg)}</p>`:''}
+ </div>
+ ${hist.length?`<div class="panel"><div class="lbl">Past rounds on this device</div><ul class="hist">${hist.slice(-8).reverse().map(r=>`<li><span>${new Date(r.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})} · ${esc(r.name)} (${esc(r.tee)})</span><span><b>${r.strokes}</b> · Post Shot ${r.ps??'–'} · In100 ${r.i100} · U&amp;D ${r.ud}${r.np?` · No pen ${r.np} · &lt;2 chips ${r.ch} · ≤2 putts ${r.pt}`:''}</span></li>`).join('')}</ul></div>`:''}
+ </div>`;
+}
+
+function renderPlay(){
+ const r=S.round,n=curNo(),h=H(n),info=holeInfo(r.course,n),d=r.draft,st=holeStats(n);
+ const shotNo=h.shots.length+1;
+ const head=`<div class="holebar">
+  <button class="navbtn" data-act="prev" ${r.idx===0?'disabled':''} aria-label="Previous hole">‹</button>
+  <div class="mid"><div class="meta">${C().name} · ${r.tee}</div><div class="hn">Hole ${n}</div><div class="meta">Par ${info.par} · ${info.m} m · ${r.idx+1} of 18</div></div>
+  <button class="navbtn" data-act="next" ${r.idx===17?'disabled':''} aria-label="Next hole">›</button></div>
+ <div class="counters">
+  <div class="ctr"><b>${h.done?h.shots.length:shotNo}</b><span>${h.done?'Shots':'Shot'}</span></div>
+  <div class="ctr"><div class="pen"><button data-act="pen" data-v="-1" aria-label="Remove penalty">−</button><b>${h.pen}</b><button data-act="pen" data-v="1" aria-label="Add penalty">+</button></div><span>Penalty</span></div>
+  <div class="ctr"><b>${st.strokes}</b><span>Hole total</span></div></div>
+ <p class="tip">${esc(info.tip)} <a href="${info.url}" target="_blank" rel="noopener">Hole flyover ↗</a></p>
+ ${h.shots.length?`<ul class="shots">${h.shots.map(shotLine).join('')}</ul>`:''}`;
+ if(h.done){
+  return `<div class="stack">${head}<div class="panel"><h3>Holed in ${st.strokes}</h3>
+   <div class="note">Post Shot ${st.ps!=null?st.ps.toFixed(1)+'/10':'–'} · Inside 100m in Reg ${st.i100==null?'–':st.i100?'Yes':'No'} · Up &amp; Down in 3 ${st.ud==null?'–':st.ud?'Yes':'No'}</div>
+   <div class="chips"><button class="btn" data-act="reopen">Reopen hole</button>${r.idx<17?`<button class="btn" data-act="next">Go to hole ${r.order[r.idx+1]}</button>`:''}</div></div></div>`;
+ }
+ if(h.shots.length===0&&d.type!=='Tee'){d.type='Tee';save()}
+ if(d.type==='Tee'&&(d.surf!=='Tee'||d.slope!=='Flat')){d.surf='Tee';d.slope='Flat';save()}
+ if(d.type!=='Tee'&&d.surf==='Tee'){d.surf=null;save()}
+ const isTee=d.type==='Tee',isApp=d.type==='Approach Shot',isChip=d.type==='Chip',is2nd=d.type==='2nd Shot',isRec=d.type==='Recovery',isBun=d.type==='Greenside Bunker',isPutt=d.type==='Putt';
+ const plan=isTee?`<div class="stage"><div class="stage-h"><span class="n">1</span><h3>Where is the uncrossable wall?</h3></div>
+   <div class="note">Tap each direction the ball must not go. Tap again to clear it.</div>
+   <div class="quadwrap">${compassSVG(d)}<div class="result">${wallList(d).length?'Wall: '+wallText(d):'No wall set'}</div></div></div>`
+ :isApp?`<div class="stage"><div class="stage-h"><span class="n">2</span><h3>Where can the ball not go?</h3></div>
+   <div class="note">Tap one quadrant to block it. The other three are your landing zone.</div>
+   <div class="quadwrap">${quadSVG(d,'plan')}</div></div>`:'';
+ const sn=plan?3:2;
+ const routine=`<div class="stage"><div class="stage-h"><span class="n">${sn}</span><h3>Pre-shot routine</h3></div><div class="routine">
+   <button class="rt" data-act="tog" data-f="see" aria-pressed="${d.see}"><span class="box">${d.see?'✓':''}</span><span>${isPutt?'1. Pick target':'If I hit this shot exactly as I want, what would it look like?'}</span></button>
+   <button class="rt" data-act="tog" data-f="feelit" aria-pressed="${d.feelit}"><span class="box">${d.feelit?'✓':''}</span><span>${isPutt?'2. Two practice putts, looking at the hole':'How good would it feel to hit that shot?'}</span></button>
+   ${isPutt?`<button class="rt" data-act="tog" data-f="commitGo" aria-pressed="${d.commitGo}"><span class="box">${d.commitGo?'✓':''}</span><span>3. Putt with purpose</span></button>`:`<button class="rt commit" data-act="tog" data-f="commitGo" aria-pressed="${d.commitGo}">${d.commitGo?'Committed ✓':'Fully commit and let it swing!'}</button>`}</div></div>`;
+ const result=isTee?`<div class="stage"><div class="stage-h"><span class="n">${sn+1}</span><h3>Where did the ball go?</h3></div>
+   <div class="note">Tap where it finished on the map.</div>${mapBlock(info,d,'result')}
+   <div class="result">${d.res?'Tee shot: '+SIDE[d.res]:'No spot selected'}</div></div>`
+ :isApp?`<div class="stage"><div class="stage-h"><span class="n">${sn+1}</span><h3>Where did the ball go?</h3></div>
+   <div class="quadwrap">${quadSVG(d,'result')}<div class="result">${d.res?QN[d.res]+(d.res===d.nogo?' · in the no-go zone':''):'Tap a quadrant'}</div></div></div>
+   ${outStage(d,APP_OUT,sn+2)}`
+ :isChip?outStage(d,CHIP_OUT,sn+1)
+ :isRec?outStage(d,REC_OUT,sn+1)
+ :isPutt?outStage(d,PUTT_OUT,sn+1):'';
+ const rn=sn+(result?2:1)+(isApp?1:0),rt=rating(d);
+ const post=`<div class="stage"><div class="stage-h"><span class="n">${rn}</span><h3>Post-shot scorecard</h3></div>
+   <div class="rate"><div class="q">Visualisation <small>Did you clearly see the shot? /3</small></div>${dots('vis',3,d.vis)}</div>
+   <div class="rate"><div class="q">Feel <small>How good did you feel over it? /3</small></div>${dots('feel',3,d.feel)}</div>
+   <div class="rate"><div class="q">Commitment <small>Did you commit and let go? /4</small></div>${dots('commit',4,d.commit)}</div>
+   <div class="score10"><span class="lbl">Shot rating</span><b>${rt!=null?rt:'–'}<small style="font-size:1rem;color:var(--muted)">/10</small></b></div></div>`;
+ const planPanel=plan?`<div class="panel">${plan}</div>`:'';
+ return `<div class="stack">${head}
+ ${isTee?planPanel:''}
+ <div class="panel">
+  <div class="stage"><div class="stage-h"><span class="n">${isTee?2:1}</span><h3>Shot ${shotNo}</h3></div>
+   ${shotNo===1?chips('type',['Tee'],'Tee'):chips('type',OPT.type,d.type)}
+   ${isChip||isBun||isPutt?'':`<div class="lbl">Wind</div>${chips('wind',OPT.wind,d.wind)}
+   <div class="lbl">Elevation change</div>${chips('elev',OPT.elev,d.elev)}`}
+   ${isPutt?'':`<div class="lbl">Lie</div>${isTee?chips('surf',['Tee'],'Tee'):isBun?chips('surf',['Bunker'],'Bunker'):chips('surf',OPT.surf.filter(x=>x!=='Tee'&&!(isRec&&x==='Fairway')&&!(isChip&&x==='Bunker')),d.surf)+chips('slope',OPT.slope,d.slope)}`}
+   <div class="row2"><div class="field"><label class="lbl" for="dist">Distance to target (m)</label><input id="dist" type="number" inputmode="numeric" min="0" max="700" value="${esc(d.dist)}"></div>
+    ${isApp||isRec||isChip||isBun||isPutt?'':`<div class="field"><label class="lbl" for="target">Target</label><input id="target" type="text" placeholder="e.g. left edge of bunker" value="${esc(d.target)}"></div>`}</div>
+   <div id="sugg">${suggestHTML(d)}</div>
+   ${isPutt?'':`<div class="lbl">Shot shape</div>${chips('shape',isBun?BUN_SHAPES:isTee?TEE_SHAPES:isChip?CHIP_SHAPES:isApp?APP_SHAPES:is2nd?SEC_SHAPES:OPT.shape,d.shape)}`}
+   ${isPutt?'':`<div class="lbl">Club</div>${chips('club',isBun?BUN_CLUBS:isTee?TEE_CLUBS:isChip?CHIP_CLUBS:isApp?APP_CLUBS:is2nd?SEC_CLUBS:isRec?REC_CLUBS:OPT.club,d.club)}`}
+  </div></div>
+ ${isTee?'':planPanel}
+ <div class="panel">${routine}</div>
+ ${result?`<div class="panel">${result}</div>`:''}
+ <div class="panel">${post}</div>
+ ${h.shots.length?`<div><button class="btn danger" data-act="undo">Undo last shot</button></div>`:''}
+ ${S.msg?`<p class="note" role="status">${esc(S.msg)}</p>`:''}
+ </div>`;
+}
+
+function scoreMark(sc,par){const d=sc-par;const cls=d<=-2?'eagle':d===-1?'bird':d===1?'bogey':d>=2?'dbl':'';return `<span class="sc ${cls}">${sc}</span>`}
+function renderCard(){
+ const r=S.round,c=C();let html='<div class="stack">';
+ let gP=0,gS=0,gM=0;
+ for(const [lab,nums] of [['Out',[1,2,3,4,5,6,7,8,9]],['In',[10,11,12,13,14,15,16,17,18]]]){
+  let tP=0,tS=0,tM=0,pl=0;
+  const rows=nums.map(n=>{const s=holeStats(n);tP+=s.par;tM+=s.m;if(s.played){tS+=s.strokes;pl++}
+   return `<tr data-act="goto" data-v="${n}" class="${n===curNo()?'cur':''}"><td>${n}</td><td>${s.m}</td><td>${s.par}</td><td>${s.played?scoreMark(s.strokes,s.par):'–'}</td><td>${H(n).pen||''}</td><td>${s.played&&s.done?(s.strokes-s.par>0?'+':'')+(s.strokes-s.par):''}</td></tr>`}).join('');
+  gP+=tP;gS+=tS;gM+=tM;
+  html+=`<div class="tblwrap"><table><thead><tr><th>Hole</th><th>${r.tee} m</th><th>Par</th><th>Score</th><th>Pen</th><th>±</th></tr></thead><tbody>${rows}<tr class="tot"><td>${lab}</td><td>${tM}</td><td>${tP}</td><td>${pl?tS:'–'}</td><td></td><td></td></tr></tbody></table></div>`;
+ }
+ const done=r.order.filter(n=>H(n).done),vp=done.reduce((a,n)=>a+holeStats(n).strokes-holeStats(n).par,0);
+ html+=`<div class="kpis"><div class="kpi"><b>${gS||'–'}</b><span>Total strokes</span></div><div class="kpi"><b>${done.length?(vp>0?'+':'')+vp:'–'}</b><span>To par (${done.length} holes)</span></div><div class="kpi"><b>${gM.toLocaleString()}</b><span>Metres · par ${gP}</span></div></div>
+ <p class="note">Score counts every shot entered plus penalty strokes. Tap a hole to jump to it.</p></div>`;
+ return html;
+}
+function zoneTotals(){
+ const r=S.round;let sum=0,cnt=0,i1=0,i1n=0,u=0,un=0,np=0,ch=0,pt=0,dn=0;
+ r.order.forEach(n=>{const s=holeStats(n);H(n).shots.forEach(x=>{const v=rating(x);if(v!=null){sum+=v;cnt++}});
+  if(s.i100!=null){i1n++;if(s.i100)i1++}if(s.ud!=null){un++;if(s.ud)u++}if(s.done){dn++;if(s.nopen)np++;if(s.chip2)ch++;if(s.putt2)pt++}});
+ return{ps:cnt?(sum/cnt).toFixed(1):null,cnt,i1,i1n,u,un,np,ch,pt,dn};
+}
+function ynCell(v,man,n,f){const c=v==null?'':v?'y':'n';return `<button class="yn ${c} ${man?'man':''}" data-act="ov" data-v="${n}" data-f="${f}" aria-label="Toggle">${v==null?'–':v?'YES':'NO'}</button>`}
+function tick(v,t){return v==null?'<span class="note">–</span>':v?`<span class="tick y" title="${t}">✓</span>`:`<span class="tick n" title="${t}">✗</span>`}
+function renderZone(){
+ const r=S.round,z=zoneTotals();
+ const rows=r.order.map(n=>{const s=holeStats(n),h=H(n);
+  return `<tr class="${n===curNo()?'cur':''}"><td>${n}</td><td>${s.par}</td><td>${s.played?s.strokes:'–'}</td><td>${s.ps!=null?s.ps.toFixed(1):'–'}<span class="note"> ${s.rated?'('+s.rated+')':''}</span></td><td>${ynCell(s.i100,h.ov.i100!=null,n,'i100')}</td><td>${ynCell(s.ud,h.ov.ud!=null,n,'ud')}</td><td>${tick(s.nopen,'Penalties: '+h.pen)}</td><td>${tick(s.chip2,'Chips: '+s.chipsN)}</td><td>${tick(s.putt2,'Putts: '+s.puttsN)}</td></tr>`}).join('');
+ return `<div class="stack">
+ <div class="kpis"><div class="kpi"><b>${z.ps??'–'}</b><span>Post Shot avg /10</span></div><div class="kpi"><b>${z.i1}/${z.i1n}</b><span>Inside 100m in Reg</span></div><div class="kpi"><b>${z.u}/${z.un}</b><span>Up &amp; Down in 3</span></div><div class="kpi"><b>${z.np}/${z.dn}</b><span>No penalties</span></div><div class="kpi"><b>${z.ch}/${z.dn}</b><span>Less than 2 chips</span></div><div class="kpi"><b>${z.pt}/${z.dn}</b><span>2 putts or less</span></div></div>
+ <div class="tblwrap"><table><thead><tr><th>Hole</th><th>Par</th><th>Score</th><th>Post Shot</th><th>In 100 Reg</th><th>U&amp;D 3</th><th>No Pen</th><th>&lt;2 Chips</th><th>≤2 Putts</th></tr></thead><tbody>${rows}
+ <tr class="tot"><td>Round</td><td>${C().par}</td><td>${r.order.reduce((a,n)=>a+(holeStats(n).played?holeStats(n).strokes:0),0)||'–'}</td><td>${z.ps??'–'}</td><td>${z.i1}/${z.i1n}</td><td>${z.u}/${z.un}</td><td>${z.np}/${z.dn}</td><td>${z.ch}/${z.dn}</td><td>${z.pt}/${z.dn}</td></tr></tbody></table></div>
+ <div class="panel note">
+  <div><b>Post Shot</b>: average shot rating (Visualisation /3 + Feel /3 + Commitment /4); rated shots in brackets.</div>
+  <div><b>Inside 100m in Regulation</b>: you were hitting from 100 m or less by shot ${'<i>par − 1</i>'} (inside 100 m in par − 2 shots). Worked out from the distance you enter.</div>
+  <div><b>Up &amp; Down in 3</b>: from your first shot inside 100 m, holed in 3 shots or fewer.</div>
+  <div><b>No Pen / &lt;2 Chips / ≤2 Putts</b>: ticked on each finished hole with no penalty strokes, fewer than 2 shots logged as Chip, and 2 or fewer shots logged as Putt.</div>
+  <div>Tap any Yes/No to override it; tap until it shows the auto value again (dotted outline = your override).</div>
+ </div>
+ <div class="chips"><button class="btn" data-act="copy">Copy round data (CSV)</button>
+  <button class="btn danger" data-act="finish">${S.confirm==='finish'?'Tap again to finish &amp; save':'Finish round'}</button>
+  <button class="btn danger" data-act="discard">${S.confirm==='discard'?'Tap again to discard':'Discard round'}</button></div>
+ ${S.msg?`<p class="note" role="status">${esc(S.msg)}</p>`:''}
+ </div>`;
+}
+
+function renderBar(){
+ const bar=document.getElementById('bar');
+ if(S.view==='combine'&&S.cbtab==='clubs'){bar.hidden=true;return}
+ if(S.view==='combine'&&S.cbtab==='matrix'){bar.hidden=false;bar.innerHTML=`<div class="in"><button class="big next" data-act="wmclear">${S.confirm==='wmclear'?'Tap again to clear':'Clear'}</button><button class="big holed" data-act="wmsave">Save session</button></div>`;return}
+ if(S.view==='combine'){bar.hidden=false;bar.innerHTML=`<div class="in"><button class="big next" data-act="cbclear">${S.confirm==='cbclear'?'Tap again to clear':'Clear'}</button><button class="big holed" data-act="cbsave">Save session</button></div>`;return}
+ if(!S.round){bar.hidden=false;bar.innerHTML=`<div class="in"><button class="big holed full" data-act="begin">Start round · ${COURSES[S.setup.course].name}</button></div>`;return}
+ if(S.view==='menu'){bar.hidden=false;bar.innerHTML=`<div class="in"><button class="big next" data-act="newround">${S.confirm==='newround'?'Tap again: save &amp; start new':'New round'}</button><button class="big holed" data-act="resume" data-v="play">Resume round</button></div>`;return}
+ if(S.tab!=='play'){bar.hidden=true;return}
+ const h=H(curNo());
+ if(h.done){bar.hidden=true;return}
+ bar.hidden=false;
+ bar.innerHTML=`<div class="in"><button class="big next" data-act="nextshot">Next shot</button><button class="big holed" data-act="holed">Holed</button></div>`;
+}
+function render(){
+ const app=document.getElementById('app');
+ const head=`<div class="top"><div class="brand">Scoring Zone<small>Sanctuary Cove Golf &amp; Country Club</small></div>${(S.round||S.view==='combine')&&S.view!=='menu'?`<button class="menubtn" data-act="menu">Main menu</button>`:''}</div>`;
+ if(S.view==='combine'){const tb=`<div class="tabs" role="tablist">${[['combine','Combine'],['matrix','Wedge Matrix'],['clubs','Club Matrix']].map(([k,l])=>`<button data-act="cbtab" data-v="${k}" aria-pressed="${(S.cbtab||'combine')===k}">${l}</button>`).join('')}</div>`;app.innerHTML=head+tb+(S.cbtab==='matrix'?renderWM():S.cbtab==='clubs'?renderCM():renderCombine());renderBar();return}
+ if(!S.round){app.innerHTML=head+renderSetup();renderBar();return}
+ if(S.view==='menu'){const r=S.round,played=r.order.filter(n=>holeStats(n).played),tot=played.reduce((a,n)=>a+holeStats(n).strokes,0),done=r.order.filter(n=>H(n).done).length;
+  app.innerHTML=head+`<div class="panel resume" style="margin-bottom:14px"><div class="lbl">Round in progress · ${new Date(r.date).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'})}</div>
+   <div class="disp" style="font-size:1.4rem">${C().name} · ${r.tee} tees</div>
+   <div class="note">${done} of 18 holes finished · ${tot} strokes so far · next up hole ${curNo()}</div>
+   <div class="chips"><button class="chip" data-act="resume" data-v="play">Play</button><button class="chip" data-act="resume" data-v="card">Scorecard</button><button class="chip" data-act="resume" data-v="zone">Scoring Method</button></div></div>`+renderSetup();
+  renderBar();return}
+ const tabs=`<div class="tabs" role="tablist">${[['play','Play'],['card','Scorecard'],['zone','Scoring Method']].map(([k,l])=>`<button data-act="tab" data-v="${k}" aria-pressed="${S.tab===k}">${l}</button>`).join('')}</div>`;
+ app.innerHTML=head+tabs+(S.tab==='play'?renderPlay():S.tab==='card'?renderCard():renderZone());
+ renderBar();
+}
+
+
+// ---------- Golf Combine ----------
+const CT=[
+ {k:'putt4',name:'4 ft putts',rule:'Holed = ✓ · Missed = ✗'},
+ {k:'lag',name:'Lag putts',rule:'Finished inside 4 ft = ✓ · Outside 4 ft = ✗'},
+ {k:'chip',name:'Chips',rule:'Up & down = ✓ · Anything else = ✗'},
+ {k:'wedge',name:'Wedges',rule:'Enter the carry. Within 10% of the target, long or short = ✓ · Outside 10% = ✗'},
+ {k:'drive',name:'Drives',rule:'Enter the distance and fairway. 200 m+ and on the fairway = ✓ · Missed fairway or under 200 m = ✗'}];
+const WT=[40,40,60,60,80,80,100,100,120,120];
+let CB=store.get('scg-combine',null);
+const newCombine=()=>({id:Date.now(),date:new Date().toISOString(),putt4:Array(10).fill(null),lag:Array(10).fill(null),chip:Array(10).fill(null),
+ wedge:WT.map(t=>({t,c:'',ov:null})),drive:Array.from({length:10},()=>({d:'',fw:null,ov:null}))});
+const saveCB=()=>store.set('scg-combine',CB);
+function cbAuto(cb,k,i){
+ if(k==='wedge'){const x=cb.wedge[i];if(x.c===''||x.c==null||isNaN(+x.c))return null;return Math.abs(+x.c-x.t)<=x.t*0.1+1e-9}
+ if(k==='drive'){const x=cb.drive[i],has=x.d!==''&&x.d!=null&&!isNaN(+x.d);if(x.fw===false)return false;if(has&&+x.d<200)return false;if(x.fw===true&&has)return true;return null}
+ return cb[k][i];
+}
+function cbRes(cb,k,i){if(k==='wedge'||k==='drive'){const o=cb[k][i].ov;if(o!=null)return o}return cbAuto(cb,k,i)}
+function cbScore(cb,k){let sc=0,at=0;for(let i=0;i<10;i++){const r=cbRes(cb,k,i);if(r!=null){at++;if(r)sc++}}return{sc,at}}
+function cbTotal(cb){return CT.reduce((a,t)=>{const s=cbScore(cb,t.k);a.sc+=s.sc;a.at+=s.at;return a},{sc:0,at:0})}
+function cbResBtn(k,i){const r=cbRes(CB,k,i),man=CB[k][i].ov!=null;
+ return `<button id="cr-${k}-${i}" class="cb sm ${r==null?'':r?'y':'n'} ${man?'man':''}" data-act="cbo" data-k="${k}" data-i="${i}" aria-label="Shot ${i+1} result. Tap to set it yourself">${r==null?'–':r?'✓':'✗'}</button>`}
+function cbDiff(i){const x=CB.wedge[i];if(x.c===''||isNaN(+x.c))return '';const d=Math.round(+x.c-x.t),pc=Math.round((+x.c-x.t)/x.t*100);return `${d>0?'+':''}${d} m · ${pc>0?'+':''}${pc}%`}
+function cbBody(t){
+ const k=t.k;
+ if(k==='wedge')return `<div class="crows">${CB.wedge.map((x,i)=>`<div class="crow"><span class="cn">${i+1}</span><span class="ctg"><b>${x.t} m</b><small>${Math.round(x.t*.9)}–${Math.round(x.t*1.1)}</small></span>
+   <input id="cw-${i}" data-cb="wedge" data-i="${i}" type="number" inputmode="numeric" min="0" max="300" placeholder="Carry m" value="${esc(x.c)}" aria-label="Wedge ${i+1} carry in metres">
+   <span class="cdf" id="cdf-${i}">${cbDiff(i)}</span>${cbResBtn(k,i)}</div>`).join('')}</div>`;
+ if(k==='drive')return `<div class="crows">${CB.drive.map((x,i)=>`<div class="crow dr"><span class="cn">${i+1}</span>
+   <input id="cd-${i}" data-cb="drive" data-i="${i}" type="number" inputmode="numeric" min="0" max="400" placeholder="Metres" value="${esc(x.d)}" aria-label="Drive ${i+1} distance in metres">
+   <span class="cfws"><button class="chip sm" data-act="cfw" data-i="${i}" data-v="1" aria-pressed="${x.fw===true}">Fairway</button><button class="chip sm wallon" data-act="cfw" data-i="${i}" data-v="0" aria-pressed="${x.fw===false}">Missed</button></span>${cbResBtn(k,i)}</div>`).join('')}</div>`;
+ return `<div class="cgrid">${CB[k].map((r,i)=>`<button class="cb ${r==null?'':r?'y':'n'}" data-act="cbt" data-k="${k}" data-i="${i}" aria-label="${t.name} ${i+1}"><small>${i+1}</small>${r==null?'':r?'✓':'✗'}</button>`).join('')}</div>`;
+}
+function trendSVG(vals,max){
+ const n=12,w=10,gap=2,W=n*(w+gap),Hh=34,last=vals.slice(-n);
+ const bars=last.map((v,i)=>{const h=Math.max(1.5,v/max*(Hh-4));const x=(n-last.length+i)*(w+gap);
+  return `<rect x="${x}" y="${(Hh-h).toFixed(1)}" width="${w}" height="${h.toFixed(1)}" rx="1.5" style="fill:${i===last.length-1?'var(--gold)':'var(--pine)'}" opacity="${i===last.length-1?1:.55}"/>`}).join('');
+ return `<svg viewBox="0 0 ${W} ${Hh}" class="spark" role="img" aria-label="Last ${last.length} sessions"><line x1="0" y1="${Hh-.5}" x2="${W}" y2="${Hh-.5}" style="stroke:var(--line)"/>${bars}</svg>`;
+}
+function renderCombine(){
+ if(!CB){CB=newCombine();saveCB()}
+ const tot=cbTotal(CB),hist=store.get('scg-combine-hist',[]);
+ const tiles=CT.map(t=>{const s=cbScore(CB,t.k);return `<a class="ctile" href="#cb-${t.k}"><b id="cs2-${t.k}">${s.sc}</b><span>${t.name}</span></a>`}).join('');
+ const sections=CT.map(t=>{const s=cbScore(CB,t.k);return `<section class="panel" id="cb-${t.k}"><div class="ct-h"><h3>10 × ${t.name}</h3><span class="ct-sc"><b id="cs-${t.k}">${s.sc}</b>/10<small id="ca-${t.k}">${s.at<10?` · ${s.at} of 10 hit`:''}</small></span></div><div class="note">${esc(t.rule)}</div>${cbBody(t)}</section>`}).join('');
+ let trend='';
+ if(hist.length){
+  const rows=CT.map(t=>{const v=hist.map(h=>h.scores[t.k]);const best=Math.max(...v),avg=(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1);
+   return `<div class="trow"><span class="tn">${t.name}</span>${trendSVG(v,10)}<span class="tv"><b>${v[v.length-1]}</b><small>best ${best} · avg ${avg}</small></span></div>`}).join('');
+  const tv=hist.map(h=>h.total),tb=Math.max(...tv),ta=(tv.reduce((a,b)=>a+b,0)/tv.length).toFixed(1);
+  trend=`<div class="panel"><div class="lbl">Improvement · last ${Math.min(12,hist.length)} of ${hist.length} sessions</div>
+   <div class="trow tot"><span class="tn">Total /50</span>${trendSVG(tv,50)}<span class="tv"><b>${tv[tv.length-1]}</b><small>best ${tb} · avg ${ta}</small></span></div>${rows}</div>
+   <div class="panel"><div class="lbl">Saved sessions</div><ul class="hist">${hist.slice().reverse().map(h=>`<li><span>${new Date(h.date).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'})}<br><small class="note">${CT.map(t=>`${t.name.split(' ')[0]==='4'?'4ft':t.name.split(' ')[0]} ${h.scores[t.k]}`).join(' · ')}</small></span><span style="display:grid;justify-items:end;gap:4px"><b class="disp" style="font-size:1.3rem">${h.total}/50</b><button class="btn danger sm" data-act="cbdel" data-v="${h.id}">${S.confirm==='cbdel-'+h.id?'Tap again to delete':'Delete'}</button></span></li>`).join('')}</ul></div>`;
+ }
+ return `<div class="stack">
+ <div class="panel cbhead"><div class="ct-h"><div><div class="lbl">Golf Combine · ${new Date(CB.date).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'})}</div><h2 style="font-size:1.6rem">Skills test</h2></div>
+  <span class="ct-big"><b id="ctot">${tot.sc}</b>/50<small id="cat">${tot.at} of 50 recorded</small></span></div>
+  <div class="ctiles">${tiles}</div></div>
+ ${S.msg?`<p class="note" role="status">${esc(S.msg)}</p>`:''}
+ ${sections}
+ <p class="note">Tap a wedge or drive result to set it yourself (dotted outline). Tap again to cycle back to automatic.</p>
+ ${trend}
+ </div>`;
+}
+function cbLive(k,i){
+ const b=document.getElementById(`cr-${k}-${i}`);if(b)b.outerHTML=cbResBtn(k,i);
+ if(k==='wedge'){const d=document.getElementById(`cdf-${i}`);if(d)d.textContent=cbDiff(i)}
+ const s=cbScore(CB,k),t=cbTotal(CB);
+ const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+ set(`cs-${k}`,s.sc);set(`cs2-${k}`,s.sc);set(`ca-${k}`,s.at<10?` · ${s.at} of 10 hit`:'');set('ctot',t.sc);set('cat',`${t.at} of 50 recorded`);
+}
+
+
+// ---------- Wedge Matrix ----------
+const WMC=['SW','GW','AW','PW'],WMS=['Half','Full'];
+const newWM=()=>{const c={};WMC.forEach(k=>{c[k]={Half:Array(10).fill(''),Full:Array(10).fill('')}});return{id:Date.now(),date:new Date().toISOString(),clubs:c}};
+let WMX=store.get('scg-wm',null);
+const saveWM=()=>store.set('scg-wm',WMX);
+function wmVals(sessions,club,sw){const v=[];sessions.forEach(m=>(m.clubs[club][sw]||[]).forEach(x=>{if(x!==''&&x!=null&&!isNaN(+x)&&+x>0)v.push(+x)}));return v}
+function wmStat(v){if(!v.length)return null;return{max:Math.max(...v),min:Math.min(...v),avg:v.reduce((a,b)=>a+b,0)/v.length,n:v.length}}
+function wmTable(sessions){
+ const cell=st=>st?`<td class="mx">${st.max}</td><td class="av">${Math.round(st.avg)}</td><td class="mn">${st.min}</td>`:'<td class="mx">–</td><td class="av">–</td><td class="mn">–</td>';
+ return `<div class="tblwrap"><table class="wmt"><thead><tr><th rowspan="2">Club</th>${WMS.map(w=>`<th colspan="3" class="grp">${w} swing</th>`).join('')}</tr>
+ <tr>${WMS.map(()=>'<th>Max</th><th>Avg</th><th>Min</th>').join('')}</tr></thead><tbody>
+ ${WMC.map(c=>`<tr><td><b>${c}</b></td>${WMS.map(w=>cell(wmStat(wmVals(sessions,c,w)))).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+function wmCount(m,c,w){return m.clubs[c][w].filter(x=>x!==''&&!isNaN(+x)&&+x>0).length}
+function renderWM(){
+ if(!WMX){WMX=newWM();saveWM()}
+ const c=S.wmClub||'SW',w=S.wmSwing||'Half',hist=store.get('scg-wm-hist',[]),scope=S.wmScope||'now';
+ const sessions=scope==='all'?hist.map(h=>h.raw).concat([WMX]):[WMX];
+ return `<div class="stack">
+ <div class="panel"><div class="ct-h"><div><div class="lbl">Wedge Matrix · ${new Date(WMX.date).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'})}</div><h2 style="font-size:1.6rem">Carry distances</h2></div></div>
+  <div class="lbl">Club</div><div class="chips">${WMC.map(k=>`<button class="chip" data-act="wmclub" data-v="${k}" aria-pressed="${c===k}">${k} <span class="cnt">${wmCount(WMX,k,'Half')+wmCount(WMX,k,'Full')}/20</span></button>`).join('')}</div>
+  <div class="lbl">Swing</div><div class="chips">${WMS.map(k=>`<button class="chip" data-act="wmswing" data-v="${k}" aria-pressed="${w===k}">${k} <span class="cnt">${wmCount(WMX,c,k)}/10</span></button>`).join('')}</div>
+  <div class="lbl">${c} · ${w} swing · carry in metres</div>
+  <div class="wmgrid">${WMX.clubs[c][w].map((x,i)=>`<label class="wmin"><small>${i+1}</small><input id="wm-${c}-${w}-${i}" data-wm="1" data-c="${c}" data-w="${w}" data-i="${i}" type="number" inputmode="numeric" min="0" max="250" value="${esc(x)}" aria-label="${c} ${w} swing ${i+1} carry"></label>`).join('')}</div>
+  <div class="note" id="wm-live">${(()=>{const st=wmStat(wmVals([WMX],c,w));return st?`${c} ${w}: max ${st.max} m · avg ${Math.round(st.avg)} m · min ${st.min} m (${st.n} swings)`:'Enter each swing’s carry. The matrix below updates as you type.'})()}</div>
+ </div>
+ ${S.msg?`<p class="note" role="status">${esc(S.msg)}</p>`:''}
+ <div class="panel"><div class="ct-h"><div class="lbl">Matrix</div><div class="chips"><button class="chip sm" data-act="wmscope" data-v="now" aria-pressed="${scope==='now'}">This session</button><button class="chip sm" data-act="wmscope" data-v="all" aria-pressed="${scope==='all'}" ${hist.length?'':'disabled'}>All sessions${hist.length?` (${hist.length+1})`:''}</button></div></div>
+  <div id="wm-table">${wmTable(sessions)}</div>
+  <div class="note">Max, average and min carry in metres for each club and swing. Blank boxes and zeros are ignored.</div></div>
+ ${hist.length?`<div class="panel"><div class="lbl">Saved matrix sessions</div><ul class="hist">${hist.slice().reverse().map(h=>`<li><span>${new Date(h.date).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'})}<br><small class="note">${WMC.map(k=>{const a=wmStat(wmVals([h.raw],k,'Full'));return `${k} full ${a?Math.round(a.avg):'–'}`}).join(' · ')}</small></span><button class="btn danger sm" data-act="wmdel" data-v="${h.id}">${S.confirm==='wmdel-'+h.id?'Tap again to delete':'Delete'}</button></li>`).join('')}</ul></div>`:''}
+ </div>`;
+}
+
+
+// ---------- Club Matrix ----------
+const CMC=['Driver','5 Wood','7 Wood','4 Hybrid','6 Iron','7 Iron','8 Iron','9 Iron'];
+let CMX=store.get('scg-cm',null)||{upd:null,clubs:{}};
+CMC.forEach(c=>{if(!CMX.clubs[c])CMX.clubs[c]={max:'',avg:'',min:''}});
+const saveCM=()=>{CMX.upd=new Date().toISOString();store.set('scg-cm',CMX)};
+const cmNum=v=>v!==''&&v!=null&&!isNaN(+v)&&+v>0?+v:null;
+function cmWarn(c){const x=CMX.clubs[c],mx=cmNum(x.max),av=cmNum(x.avg),mn=cmNum(x.min);
+ if(mx!=null&&av!=null&&av>mx)return 'Avg is above max';if(mn!=null&&av!=null&&mn>av)return 'Min is above avg';if(mn!=null&&mx!=null&&mn>mx)return 'Min is above max';return ''}
+function cmChart(){
+ const rows=CMC.map(c=>{const x=CMX.clubs[c];return{c,mx:cmNum(x.max),av:cmNum(x.avg),mn:cmNum(x.min)}});
+ const all=rows.flatMap(r=>[r.mx,r.av,r.mn]).filter(v=>v!=null);
+ if(!all.length)return '<p class="note">Enter distances above and the chart will show each club’s range and the gaps between them.</p>';
+ const top=Math.max(50,Math.ceil(Math.max(...all)/50)*50),bot=Math.max(0,Math.floor((Math.min(...all)-10)/50)*50),L=62,R=310,rh=30,H=rows.length*rh+34,X=v=>L+(R-L)*(v-bot)/(top-bot);
+ let o='';for(let t=bot;t<=top;t+=(top-bot>150?50:25)){const x=X(t).toFixed(1);o+=`<line x1="${x}" y1="10" x2="${x}" y2="${H-20}" style="stroke:var(--line)" stroke-width="1"/><text x="${x}" y="${H-6}" text-anchor="middle" style="fill:var(--muted)" font-size="10" font-family="Source Sans 3,sans-serif">${t}</text>`}
+ rows.forEach((r,i)=>{const y=18+i*rh,cy=y+rh/2-4;
+  o+=`<text x="${L-8}" y="${cy+4}" text-anchor="end" style="fill:var(--fg)" font-size="12" font-weight="600" font-family="Source Sans 3,sans-serif">${r.c}</text>`;
+  const lo=r.mn??r.av??r.mx,hi=r.mx??r.av??r.mn;
+  if(lo!=null&&hi!=null){o+=`<rect x="${X(Math.min(lo,hi)).toFixed(1)}" y="${cy-6}" width="${Math.max(3,X(Math.max(lo,hi))-X(Math.min(lo,hi))).toFixed(1)}" height="12" rx="6" style="fill:var(--go);stroke:var(--go-line)"/>`}
+  if(r.av!=null)o+=`<rect x="${(X(r.av)-2).toFixed(1)}" y="${cy-10}" width="4" height="20" rx="2" style="fill:var(--pine)"/><text x="${(X(r.av)).toFixed(1)}" y="${cy-13}" text-anchor="middle" style="fill:var(--pine)" font-size="10" font-weight="700" font-family="Source Sans 3,sans-serif">${r.av}</text>`;
+ });
+ return `<div class="cmchart"><svg viewBox="0 0 320 ${H}" role="img" aria-label="Club distance ranges">${o}</svg></div>`;
+}
+function cmGaps(){const r=CMC.map(c=>({c,av:cmNum(CMX.clubs[c].avg)}));const out=[];
+ for(let i=0;i<r.length-1;i++){if(r[i].av!=null&&r[i+1].av!=null)out.push(`<span class="gap ${r[i].av-r[i+1].av<8?'tight':''}"><b>${r[i].av-r[i+1].av} m</b> ${r[i].c} → ${r[i+1].c}</span>`)}
+ return out.length?`<div class="lbl">Gaps between average carries</div><div class="gaps">${out.join('')}</div>`:''}
+function renderCM(){
+ return `<div class="stack">
+ <div class="panel"><div class="ct-h"><div><div class="lbl">Club Matrix${CMX.upd?` · updated ${new Date(CMX.upd).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}`:''}</div><h2 style="font-size:1.6rem">Driver to 9 iron</h2></div></div>
+  <div class="note">Enter your max, average and min distance in metres for each club. Changes save as you type.</div>
+  <div class="tblwrap"><table class="cmt"><thead><tr><th>Club</th><th>Max</th><th>Avg</th><th>Min</th></tr></thead><tbody>
+  ${CMC.map(c=>{const x=CMX.clubs[c],w=cmWarn(c);return `<tr><td><b>${c}</b><div class="cmw" id="cmw-${c.replace(' ','')}">${w}</div></td>${['max','avg','min'].map(f=>`<td><input id="cm-${c.replace(' ','')}-${f}" data-cm="${c}" data-f="${f}" type="number" inputmode="numeric" min="0" max="400" value="${esc(x[f])}" aria-label="${c} ${f} distance"></td>`).join('')}</tr>`}).join('')}
+  </tbody></table></div></div>
+ <div class="panel"><div class="lbl">Ranges · min to max, bar marks average</div><div id="cm-chart">${cmChart()}</div><div id="cm-gaps">${cmGaps()}</div></div>
+ </div>`;
+}
+
+
+// ---------- Club suggestion (from Club Matrix + Wedge Matrix) ----------
+const WM_TO_CLUB={PW:'PW',AW:'AW',GW:'52',SW:'56'};
+function clubOptions(){
+ const o=[];
+ CMC.forEach(c=>{const x=CMX.clubs[c],av=cmNum(x.avg);if(av==null)return;o.push({name:c,club:c,av,mx:cmNum(x.max)??av,mn:cmNum(x.min)??av})});
+ const ss=store.get('scg-wm-hist',[]).map(h=>h.raw).concat(WMX?[WMX]:[]);
+ WMC.forEach(c=>WMS.forEach(w=>{const st=wmStat(wmVals(ss,c,w));if(st)o.push({name:`${c} ${w.toLowerCase()}`,club:WM_TO_CLUB[c],av:Math.round(st.avg),mx:st.max,mn:st.min})}));
+ return o;
+}
+function suggestHTML(d){
+ if(!d||!['Tee','2nd Shot','Approach Shot'].includes(d.type))return '';
+ const D=cmNum(d.dist),adj=d.wind==='Headwind'?-5:d.wind==='Tailwind'?5:0;
+ const opts=clubOptions().map(o=>({...o,av:o.av+adj,mx:o.mx+adj,mn:o.mn+adj}));
+ const windNote=adj?`${d.wind}: club distances ${adj>0?'+':'−'}5 m.`:'';
+ if(!opts.length)return '';
+ if(D==null)return `<div class="sugg"><div class="lbl">Club suggestion</div><div class="note">Enter a distance to target to get a club from your Club and Wedge Matrix.</div></div>`;
+ const isT=d.type==='Tee',isA=d.type==='Approach Shot';
+ const long=(isT&&wallHas(d,'Long'))||(isA&&(d.nogo==='LL'||d.nogo==='LR'));
+ const short=(isT&&wallHas(d,'Short'))||(isA&&(d.nogo==='SL'||d.nogo==='SR'));
+ const left=(isT&&wallHas(d,'L'))||(isA&&(d.nogo==='LL'||d.nogo==='SL'));
+ const right=(isT&&wallHas(d,'R'))||(isA&&(d.nogo==='LR'||d.nogo==='SR'));
+ let list,why,rule,warn='';
+ if(long&&short){list=opts.slice().sort((a,b)=>Math.max(Math.abs(a.mx-D),Math.abs(a.mn-D))-Math.max(Math.abs(b.mx-D),Math.abs(b.mn-D)));rule='Long and short are both walls: the club whose whole range sits closest to the target.';why=o=>`${o.mn}–${o.mx} m range`}
+ else if(long){const f=opts.filter(o=>o.mx<=D).sort((a,b)=>b.av-a.av);rule="Can't go long: your max carry must stay short of the target.";why=o=>`max ${o.mx} m stays short`;
+  if(f.length)list=f;else{list=opts.slice().sort((a,b)=>a.mx-b.mx);warn='Even your shortest club can fly past this. Take less club and make a smaller swing.'}}
+ else if(short){const f=opts.filter(o=>o.mn>=D).sort((a,b)=>a.av-b.av);rule="Can't go short: your min carry must still reach the target.";why=o=>`min ${o.mn} m still gets there`;
+  if(f.length)list=f;else{list=opts.slice().sort((a,b)=>b.mn-a.mn);warn='No club reliably carries this far. Consider laying up to a full-swing number.'}}
+ else{list=opts.slice().sort((a,b)=>Math.abs(a.av-D)-Math.abs(b.av-D));rule='No long or short wall set: the club whose average is closest.';why=o=>{const df=o.av-D;return `avg ${o.av} m (${df>0?'+':''}${df})`}}
+ const top=list.slice(0,2);
+ const side=left&&right?'Walls both sides: commit to your stock shape at the centre.':left?'Wall left: start it right of target and favour a fade.':right?'Wall right: start it left of target and favour a draw.':'';
+ return `<div class="sugg"><div class="lbl">Club suggestion · ${D} m${long?' · no long':''}${short?' · no short':''}${adj?` · ${d.wind.toLowerCase()} ${adj>0?'+':'−'}5 m`:''}</div>
+  <div class="sopts">${top.map((o,i)=>`<button class="sopt ${i===0?'best':''}" data-act="usesugg" data-v="${esc(o.club)}" aria-pressed="${d.club===o.club}"><b>${esc(o.name)}</b><span>${esc(why(o))}</span><small>${o.mn}–${o.mx} m · avg ${o.av}</small></button>`).join('')}</div>
+  ${warn?`<div class="note swarn">${warn}</div>`:''}<div class="note">${windNote?windNote+' ':''}${rule}${side?' '+side:''}</div></div>`;
+}
+
+// ---------- Actions ----------
+function commitShot(){
+ const n=curNo(),d=S.round.draft;
+ if(!d.type){S.msg='Pick a shot type first.';render();return false}
+ H(n).shots.push(d);S.msg='';return true;
+}
+function goIdx(i){S.round.idx=Math.max(0,Math.min(17,i));const n=curNo();if(!H(n).done)S.round.draft=newShot(n);S.msg='';save();render();window.scrollTo(0,0)}
+function svgPoint(el,ev){const svg=el.querySelector('svg'),b=svg.getBoundingClientRect();return{x:+((ev.clientX-b.left)/b.width*VW).toFixed(1),y:+((ev.clientY-b.top)/b.height*VH).toFixed(1)}}
+document.addEventListener('click',ev=>{
+ const el=ev.target.closest('[data-act]');if(!el)return;
+ const a=el.dataset.act,v=el.dataset.v,f=el.dataset.f,d=S.round&&S.round.draft;
+ if(!['finish','discard','newround','cbclear','cbdel','wmclear','wmdel'].includes(a))S.confirm=null;
+ switch(a){
+  case 'course':S.setup.course=v;break;
+  case 'start':S.setup.start=+v;break;
+  case 'tee':S.setup.tee=v;break;
+  case 'begin':startRound();S.view=null;break;
+  case 'combine':S.view='combine';S.msg='';if(!CB){CB=newCombine();saveCB()}render();window.scrollTo(0,0);return;
+  case 'cbtab':S.cbtab=v;S.msg='';render();window.scrollTo(0,0);return;
+  case 'wmclub':S.wmClub=v;render();return;
+  case 'wmswing':S.wmSwing=v;render();return;
+  case 'wmscope':S.wmScope=v;render();return;
+  case 'wmsave':{const n=WMC.reduce((a,c)=>a+wmCount(WMX,c,'Half')+wmCount(WMX,c,'Full'),0);if(!n){S.msg='Enter at least one carry before saving.';render();return}
+    const hist=store.get('scg-wm-hist',[]);hist.push({id:WMX.id,date:WMX.date,raw:WMX,n});store.set('scg-wm-hist',hist.slice(-60));
+    WMX=newWM();saveWM();S.wmScope='all';S.msg=`Saved ${n} swings. A fresh matrix is ready; the table now shows all sessions.`;render();window.scrollTo(0,0);return}
+  case 'wmclear':if(S.confirm!=='wmclear'){S.confirm='wmclear';render();return}
+    WMX=newWM();saveWM();S.confirm=null;S.msg='Matrix cleared.';render();return;
+  case 'wmdel':if(S.confirm!=='wmdel-'+v){S.confirm='wmdel-'+v;render();return}
+    store.set('scg-wm-hist',store.get('scg-wm-hist',[]).filter(h=>String(h.id)!==v));S.confirm=null;if(!store.get('scg-wm-hist',[]).length)S.wmScope='now';render();return;
+  case 'cbt':{const k=el.dataset.k,i=+el.dataset.i,c=CB[k][i];CB[k][i]=c==null?true:c===true?false:null;saveCB();render();return}
+  case 'cbo':{const x=CB[el.dataset.k][+el.dataset.i];x.ov=x.ov==null?true:x.ov===true?false:null;saveCB();cbLive(el.dataset.k,+el.dataset.i);return}
+  case 'cfw':{const x=CB.drive[+el.dataset.i],val=v==='1';x.fw=x.fw===val?null:val;saveCB();render();return}
+  case 'cbsave':{const t=cbTotal(CB);if(!t.at){S.msg='Record at least one shot before saving.';render();return}
+    const scores={};CT.forEach(c=>scores[c.k]=cbScore(CB,c.k).sc);
+    const hist=store.get('scg-combine-hist',[]);hist.push({id:CB.id,date:CB.date,scores,total:t.sc,att:t.at,raw:CB});store.set('scg-combine-hist',hist.slice(-80));
+    S.msg=`Saved: ${t.sc}/50${t.at<50?` (${t.at} of 50 shots recorded)`:''}. A fresh session is ready.`;CB=newCombine();saveCB();render();window.scrollTo(0,0);return}
+  case 'cbclear':if(S.confirm!=='cbclear'){S.confirm='cbclear';render();return}
+    CB=newCombine();saveCB();S.confirm=null;S.msg='Session cleared.';render();return;
+  case 'cbdel':if(S.confirm!=='cbdel-'+v){S.confirm='cbdel-'+v;render();return}
+    store.set('scg-combine-hist',store.get('scg-combine-hist',[]).filter(h=>String(h.id)!==v));S.confirm=null;render();return;
+  case 'menu':S.view=S.round?'menu':null;S.msg='';save();render();window.scrollTo(0,0);return;
+  case 'resume':S.view=null;S.tab=v||'play';S.msg='';render();window.scrollTo(0,0);return;
+  case 'newround':if(S.confirm!=='newround'){S.confirm='newround';break}
+    if(S.round.order.some(n=>holeStats(n).played))archiveRound();startRound();S.view=null;S.confirm=null;render();window.scrollTo(0,0);return;
+  case 'tab':S.tab=v;S.msg='';break;
+  case 'set':{
+    if(f==='type'&&H(curNo()).shots.length===0){d.type='Tee';break}
+    if(f==='surf'&&d.type==='Tee'){d.surf='Tee';break}
+    if(f==='surf'&&d.type==='Greenside Bunker'){d.surf='Bunker';break}
+    d[f]=d[f]===v?null:v;
+    if(f==='type'&&v==='Tee'&&d.type==='Tee'){d.surf='Tee';d.slope='Flat';if(d.shape&&!TEE_SHAPES.includes(d.shape))d.shape=null;if(d.club&&!TEE_CLUBS.includes(d.club))d.club=null}
+    if(f==='type'&&d.type==='Chip'){d.wind=null;d.elev=null;if(d.surf==='Bunker')d.surf=null;if(d.shape&&!CHIP_SHAPES.includes(d.shape))d.shape=null;if(d.club&&!CHIP_CLUBS.includes(d.club))d.club=null}
+    if(f==='type'&&d.type==='Approach Shot'){if(d.shape&&!APP_SHAPES.includes(d.shape))d.shape=null;if(d.club&&!APP_CLUBS.includes(d.club))d.club=null}
+    if(f==='type'&&d.type==='2nd Shot'){if(d.shape&&!SEC_SHAPES.includes(d.shape))d.shape=null;if(d.club&&!SEC_CLUBS.includes(d.club))d.club=null}
+    if(f==='type'&&d.type==='Recovery'){if(d.surf==='Fairway')d.surf=null;if(d.club&&!REC_CLUBS.includes(d.club))d.club=null}
+    if(f==='type'&&d.type==='Greenside Bunker'){d.wind=null;d.elev=null;d.surf='Bunker';d.slope=null;if(d.shape&&!BUN_SHAPES.includes(d.shape))d.shape=null;if(d.club&&!BUN_CLUBS.includes(d.club))d.club=null}
+    if(f==='type'&&d.type!=='Greenside Bunker'&&d.type!=='Putt'&&d.slope==null)d.slope='Flat';
+    if(f==='type')d.out=[];
+    if(f==='type'){d.res=null;d.pt=null;if(v==='Tee'&&!d.surf)d.surf='Tee';if(v==='Putt'&&d.type==='Putt'){d.club='Putter';d.shape=null;d.wind=null;d.elev=null;d.surf=null;d.slope=null}if(v==='Greenside Bunker'){d.surf='Bunker'}}
+    break}
+  case 'outt':if(d.type==='Putt'){let l=(d.out||[]).slice();const i=l.indexOf(v);
+    if(i>=0)l.splice(i,1);else{
+     if(v==='holed')l=['holed'];
+     else{l=l.filter(x=>x!=='holed');l.push(v);
+      if(v==='p4'&&!l.includes('p10'))l.push('p10');
+      if(v==='short')l=l.filter(x=>x!=='long');if(v==='long')l=l.filter(x=>x!=='short');}}
+    d.out=PUTT_OUT.map(o=>o[0]).filter(k=>l.includes(k));break}
+   {let l=(d.out||[]).slice();const i=l.indexOf(v);
+    if(i>=0)l.splice(i,1);else{l.push(v);
+     if(isMissOut(v))l=l.filter(x=>x===v);
+     else{l=l.filter(x=>!isMissOut(x));if(v==='play')l=['play'];if(v==='4ft'&&!l.includes('10ft'))l.push('10ft')}}
+    d.out=OUT_ALL.map(o=>o[0]).filter(k=>l.includes(k));break}
+  case 'usesugg':d.club=v;break;
+  case 'wallt':{const l=wallList(d).slice(),i=l.indexOf(v);if(i>=0)l.splice(i,1);else l.push(v);d.wall=l;break}
+  case 'tog':d[f]=!d[f];break;
+  case 'rate':d[f]=d[f]===+v?null:+v;break;
+  case 'quad':{const q=el.dataset.q;if(el.dataset.mode==='plan')d.nogo=d.nogo===q?null:q;else d.res=d.res===q?null:q;break}
+  case 'mapsvg':{const info=holeInfo(S.round.course,curNo());const p=svgPoint(el,ev);const t=tAt(p.y),c=cx(t,info.dog),w=info.par===3?22:34;
+    d.pt=p;d.res=Math.abs(p.x-c)<=w*0.45?'M':(p.x<c?'L':'R');break}
+  case 'mapimg':{const b=el.getBoundingClientRect();const px=(ev.clientX-b.left)/b.width*100,py=(ev.clientY-b.top)/b.height*100;
+    d.pt={px:+px.toFixed(1),py:+py.toFixed(1)};d.res=px<38?'L':px>62?'R':'M';break}
+  case 'rmphoto':delPhoto(photoKey(curNo()));break;
+  case 'pen':{const h=H(curNo());h.pen=Math.max(0,h.pen+(+v));break}
+  case 'nextshot':if(!commitShot())return;S.round.draft=newShot(curNo());window.scrollTo(0,0);break;
+  case 'holed':{if(!commitShot())return;const h=H(curNo());h.done=true;S.round.draft=null;
+    const nxt=S.round.order.findIndex((n,i)=>i>S.round.idx&&!H(n).done);
+    if(nxt>=0){S.round.idx=nxt;S.round.draft=newShot(curNo());S.msg=''}else{S.tab='zone';S.msg='All holes complete. Review your Scoring Method card, then finish the round to save it.'}
+    save();render();window.scrollTo(0,0);return}
+  case 'undo':{const h=H(curNo());const last=h.shots.pop();if(last){S.round.draft=last}break}
+  case 'reopen':{const h=H(curNo());h.done=false;S.round.draft=newShot(curNo());break}
+  case 'prev':goIdx(S.round.idx-1);return;
+  case 'next':goIdx(S.round.idx+1);return;
+  case 'goto':S.tab='play';goIdx(S.round.order.indexOf(+v));return;
+  case 'ov':{const h=H(+v);const cur=h.ov[f];h.ov[f]=cur==null?true:cur===true?false:null;break}
+  case 'copy':{const csv=toCSV();const done=()=>{S.msg='Round data copied. Paste it into a spreadsheet.';render()};
+    try{navigator.clipboard.writeText(csv).then(done,()=>{S.msg='Copy was blocked in this view. Try again from the browser.';render()})}catch(e){S.msg='Copy was blocked here.';render()}return}
+  case 'finish':if(S.confirm!=='finish'){S.confirm='finish';break}
+    archiveRound();S.round=null;S.view=null;S.confirm=null;S.msg='';render();window.scrollTo(0,0);return;
+  case 'discard':if(S.confirm!=='discard'){S.confirm='discard';break}
+    store.del('scg-round');S.round=null;S.view=null;S.confirm=null;render();return;
+ }
+ save();render();
+});
+document.addEventListener('input',ev=>{
+ const cb=ev.target.dataset&&ev.target.dataset.cb;
+ if(ev.target.dataset&&ev.target.dataset.cm){const t=ev.target,c=t.dataset.cm;CMX.clubs[c][t.dataset.f]=t.value;saveCM();
+  const w=document.getElementById('cmw-'+c.replace(' ',''));if(w)w.textContent=cmWarn(c);
+  const ch=document.getElementById('cm-chart');if(ch)ch.innerHTML=cmChart();const g=document.getElementById('cm-gaps');if(g)g.innerHTML=cmGaps();return}
+ if(ev.target.dataset&&ev.target.dataset.wm&&WMX){const t=ev.target,c=t.dataset.c,w=t.dataset.w;WMX.clubs[c][w][+t.dataset.i]=t.value;saveWM();
+  const hist=store.get('scg-wm-hist',[]),ss=(S.wmScope==='all')?hist.map(h=>h.raw).concat([WMX]):[WMX];
+  const tb=document.getElementById('wm-table');if(tb)tb.innerHTML=wmTable(ss);
+  const st=wmStat(wmVals([WMX],c,w)),lv=document.getElementById('wm-live');if(lv)lv.textContent=st?`${c} ${w}: max ${st.max} m · avg ${Math.round(st.avg)} m · min ${st.min} m (${st.n} swings)`:'';
+  document.querySelectorAll('[data-act="wmswing"]').forEach(b=>{const k=b.dataset.v;b.querySelector('.cnt').textContent=`${wmCount(WMX,c,k)}/10`});
+  document.querySelectorAll('[data-act="wmclub"]').forEach(b=>{const k=b.dataset.v;b.querySelector('.cnt').textContent=`${wmCount(WMX,k,'Half')+wmCount(WMX,k,'Full')}/20`});return}
+ if(cb&&CB){const i=+ev.target.dataset.i;if(cb==='wedge')CB.wedge[i].c=ev.target.value;else CB.drive[i].d=ev.target.value;saveCB();cbLive(cb,i);return}
+ if(!S.round||!S.round.draft)return;
+ if(ev.target.id==='dist'){S.round.draft.dist=ev.target.value;const sg=document.getElementById('sugg');if(sg)sg.innerHTML=suggestHTML(S.round.draft)}
+ if(ev.target.id==='target')S.round.draft.target=ev.target.value;
+ save();
+});
+document.addEventListener('change',async ev=>{
+ const t=ev.target;if(!t.files||!t.files.length)return;
+ const one=async(n,file,course)=>{try{return await putPhoto(photoKey(n,course),await fileToJpeg(file))}catch(e){return false}};
+ if(t.id==='photo'){S.msg=await one(curNo(),t.files[0])?'Photo saved for this hole on this device.':'That photo could not be saved. The drawn map is still available.';render();return}
+ if(t.classList.contains('photoone')){S.msg=await one(+t.dataset.n,t.files[0],S.setup.course)?`Photo saved for hole ${t.dataset.n}.`:'That photo could not be saved.';render();return}
+ if(t.id==='photobulk'){const files=[...t.files].sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true})).slice(0,18);let ok=0;
+  S.msg=`Importing ${files.length} photos…`;render();
+  for(let i=0;i<files.length;i++){if(await one(i+1,files[i],S.setup.course))ok++}
+  S.msg=`${ok} of ${files.length} photos saved to holes 1–${files.length} of ${COURSES[S.setup.course].name}.`;render()}
+});
+function archiveRound(){
+ const z=zoneTotals(),strokes=S.round.order.reduce((a,n)=>a+(holeStats(n).played?holeStats(n).strokes:0),0);
+ const hist=store.get('scg-history',[]);hist.push({date:S.round.date,name:C().name,tee:S.round.tee,strokes,ps:z.ps,i100:`${z.i1}/${z.i1n}`,ud:`${z.u}/${z.un}`,np:`${z.np}/${z.dn}`,ch:`${z.ch}/${z.dn}`,pt:`${z.pt}/${z.dn}`,csv:toCSV()});
+ store.set('scg-history',hist.slice(-40));store.del('scg-round');
+}
+function toCSV(){
+ const r=S.round,cols=['hole','par','shot','type','wind','elevation','lie','lie_slope','distance_m','shape','target','club','wall','no_go','result','visualisation','feel','commitment','rating'];
+ const rows=[cols.join(',')];
+ r.order.forEach(n=>{const p=holeInfo(r.course,n).par;H(n).shots.forEach((s,i)=>rows.push([n,p,i+1,s.type,s.wind,s.elev,s.surf,s.slope,s.dist,s.shape,s.target,s.club,wallText(s),s.nogo&&QN[s.nogo],[s.res&&(SIDE[s.res]||QN[s.res]),outText(s)].filter(Boolean).join(' / '),s.vis,s.feel,s.commit,rating(s)].map(x=>`"${String(x??'').replace(/"/g,'""')}"`).join(',')));
+  if(H(n).pen)rows.push([n,p,'penalty',`"${H(n).pen} penalty"`].join(','))});
+ return rows.join('\n');
+}
+render();loadPhotos().then(render);
+</script>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}))}
+</script>
+</body>
+</html>
